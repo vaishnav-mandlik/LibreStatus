@@ -1,19 +1,43 @@
 {
-  "name": "WhatsApp",
-  "version": "0.0.1",
+  "name": "WhatsAppStatusSaver",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "build:android": "cd android && ./gradlew assembleRelease",
+    "build:bundle": "cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
     "react": "19.1.1",
     "react-native": "0.82.1",
     "@react-native/new-app-screen": "0.82.1",
-    "react-native-safe-area-context": "^5.5.2"
+    "react-native-safe-area-context": "^5.5.2",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.1.17",
+    "@react-navigation/bottom-tabs": "^7.1.10",
+    "nativewind": "^4.1.23",
+    "react-native-reanimated": "^3.16.6",
+    "react-native-gesture-handler": "^2.21.2",
+    "react-native-fast-image": "^8.6.3",
+    "react-native-video": "^6.9.0",
+    "lottie-react-native": "^7.2.0",
+    "react-native-mmkv": "^3.1.0",
+    "react-native-fs": "^2.20.0",
+    "@react-native-camera-roll/camera-roll": "^7.8.3",
+    "react-native-permissions": "^5.1.1",
+    "react-native-share": "^12.0.0",
+    "@shopify/flash-list": "^1.7.2",
+    "@gorhom/bottom-sheet": "^5.0.6",
+    "react-native-haptic-feedback": "^2.3.3",
+    "react-native-toast-message": "^2.2.1",
+    "react-native-vector-icons": "^10.2.0",
+    "zustand": "^5.0.2",
+    "date-fns": "^4.1.0",
+    "react-native-linear-gradient": "^2.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
