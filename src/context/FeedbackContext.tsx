@@ -90,7 +90,9 @@ export const FeedbackProvider: React.FC<PropsWithChildren> = ({ children }) => {
       (action, index, arr) => ({
         ...action,
         id: index,
-        variant: action.variant ?? (index === arr.length - 1 ? 'primary' : 'secondary'),
+        variant:
+          action.variant ??
+          (index === arr.length - 1 ? 'primary' : 'secondary'),
       }),
     );
 
@@ -301,34 +303,36 @@ const FeedbackToast: React.FC<FeedbackToastProps> = ({
           <Text style={styles.toastMessage}>{message.message}</Text>
           {message.actions && message.actions.length > 0 ? (
             <View style={styles.toastActions}>
-              {message.actions.map((action: FeedbackAction, actionIndex: number) => {
-                const variantIsPrimary = action.variant === 'primary';
-                const actionStyle = StyleSheet.compose(
-                  StyleSheet.compose(
-                    styles.toastAction,
+              {message.actions.map(
+                (action: FeedbackAction, actionIndex: number) => {
+                  const variantIsPrimary = action.variant === 'primary';
+                  const actionStyle = StyleSheet.compose(
+                    StyleSheet.compose(
+                      styles.toastAction,
+                      variantIsPrimary
+                        ? accentStyles.actionPrimary
+                        : accentStyles.actionSecondary,
+                    ),
+                    actionIndex > 0 ? styles.toastActionSpacing : undefined,
+                  );
+                  const labelStyle = StyleSheet.compose(
+                    styles.toastActionLabel,
                     variantIsPrimary
-                      ? accentStyles.actionPrimary
-                      : accentStyles.actionSecondary,
-                  ),
-                  actionIndex > 0 ? styles.toastActionSpacing : undefined,
-                );
-                const labelStyle = StyleSheet.compose(
-                  styles.toastActionLabel,
-                  variantIsPrimary
-                    ? accentStyles.labelPrimary
-                    : accentStyles.labelSecondary,
-                );
+                      ? accentStyles.labelPrimary
+                      : accentStyles.labelSecondary,
+                  );
 
-                return (
-                  <Pressable
-                    key={action.id}
-                    style={actionStyle}
-                    onPress={() => handleActionPress(action)}
-                  >
-                    <Text style={labelStyle}>{action.label}</Text>
-                  </Pressable>
-                );
-              })}
+                  return (
+                    <Pressable
+                      key={action.id}
+                      style={actionStyle}
+                      onPress={() => handleActionPress(action)}
+                    >
+                      <Text style={labelStyle}>{action.label}</Text>
+                    </Pressable>
+                  );
+                },
+              )}
             </View>
           ) : null}
         </View>

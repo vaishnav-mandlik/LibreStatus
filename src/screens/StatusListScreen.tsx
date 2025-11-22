@@ -257,45 +257,48 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     loadStatuses(true);
   }, [loadStatuses]);
 
-  const handleSave = useCallback(async (status: StatusFile) => {
-    setSavingId(status.id);
-    try {
-      const success = await saveStatusToGallery(status);
-      if (success) {
-        showMessage({
-          title: 'Saved to gallery',
-          message: 'Status is now available in your downloads.',
-          type: 'success',
-        });
-        const savedStatus = { ...status, isSaved: true };
-        setStatuses(prev =>
-          prev.map(s => (s.id === status.id ? savedStatus : s)),
-        );
-        setSavedStatuses(prev => {
-          const exists = prev.find(s => s.id === status.id);
-          if (!exists) {
-            return [savedStatus, ...prev];
-          }
-          return prev;
-        });
-      } else {
+  const handleSave = useCallback(
+    async (status: StatusFile) => {
+      setSavingId(status.id);
+      try {
+        const success = await saveStatusToGallery(status);
+        if (success) {
+          showMessage({
+            title: 'Saved to gallery',
+            message: 'Status is now available in your downloads.',
+            type: 'success',
+          });
+          const savedStatus = { ...status, isSaved: true };
+          setStatuses(prev =>
+            prev.map(s => (s.id === status.id ? savedStatus : s)),
+          );
+          setSavedStatuses(prev => {
+            const exists = prev.find(s => s.id === status.id);
+            if (!exists) {
+              return [savedStatus, ...prev];
+            }
+            return prev;
+          });
+        } else {
+          showMessage({
+            title: 'Failed to save',
+            message: 'Please try again after a moment.',
+            type: 'error',
+          });
+        }
+      } catch (error) {
+        console.error('Error saving status:', error);
         showMessage({
           title: 'Failed to save',
           message: 'Please try again after a moment.',
           type: 'error',
         });
+      } finally {
+        setSavingId(null);
       }
-    } catch (error) {
-      console.error('Error saving status:', error);
-      showMessage({
-        title: 'Failed to save',
-        message: 'Please try again after a moment.',
-        type: 'error',
-      });
-    } finally {
-      setSavingId(null);
-    }
-  }, [showMessage]);
+    },
+    [showMessage],
+  );
 
   const filteredStatuses = useMemo(() => {
     const sourceStatuses = activeTab === 'saved' ? savedStatuses : statuses;
