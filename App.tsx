@@ -8,9 +8,9 @@ import {
   Animated,
   AppState,
   AppStateStatus,
+  BackHandler,
   Dimensions,
   Easing,
-  Modal,
   PanResponder,
   StatusBar,
   StyleSheet,
@@ -29,7 +29,7 @@ import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { ThemeProvider } from './src/context/ThemeContext';
 
-type TabType = 'status' | 'saved';
+type TabType = 'status' | 'saved' | 'settings';
 type MediaType = 'images' | 'videos';
 
 const { width } = Dimensions.get('window');
@@ -52,7 +52,6 @@ function App() {
 function AppContent() {
   const [activeTab, setActiveTab] = useState<TabType>('status');
   const [activeMedia, setActiveMedia] = useState<MediaType>('images');
-  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [reloadTick, setReloadTick] = useState<number>(Date.now());
   const activeMediaRef = useRef<MediaType>(activeMedia);
   const mediaProgress = useRef(
@@ -60,6 +59,7 @@ function AppContent() {
   ).current;
   const isAnimating = useRef(false);
   const insets = useSafeAreaInsets();
+  const lastPrimaryTabRef = useRef<TabType>('status');
 
   const imagesLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
@@ -84,13 +84,18 @@ function AppContent() {
       }),
     [mediaProgress],
   );
-
   const imagePointerEvents = activeMedia === 'images' ? 'auto' : 'none';
   const videoPointerEvents = activeMedia === 'videos' ? 'auto' : 'none';
 
   useEffect(() => {
     activeMediaRef.current = activeMedia;
   }, [activeMedia]);
+
+  useEffect(() => {
+    if (activeTab !== 'settings') {
+      lastPrimaryTabRef.current = activeTab;
+    }
+  }, [activeTab]);
 
   const animateProgressTo = (value: number, onComplete?: () => void) => {
     mediaProgress.stopAnimation();
@@ -220,6 +225,23 @@ function AppContent() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    const onBackPress = () => {
+      if (activeTab === 'settings') {
+        setActiveTab(lastPrimaryTabRef.current);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      onBackPress,
+    );
+
+    return () => subscription.remove();
+  }, [activeTab]);
+
   /*
    * Helper for opening WhatsApp when header shortcuts are re-enabled.
    * Uncomment the header section below to surface these actions again.
@@ -282,84 +304,98 @@ function AppContent() {
           </View>
         </View> */}
 
-        {/* Media Tabs */}
-        <View style={styles.mediaTabs}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.tabIndicator,
-              {
-                width: TAB_WIDTH,
-                transform: [{ translateX: tabIndicatorTranslate }],
-              },
-            ]}
-          />
-          <TouchableOpacity
-            style={styles.mediaTab}
-            onPress={() => handleMediaTabPress('images')}
-          >
-            <Icon
-              name="picture"
-              size={18}
-              color={activeMedia === 'images' ? ACTIVE_COLOR : INACTIVE_COLOR}
-              style={styles.tabIcon}
-            />
-            <Animated.Text
-              style={[styles.mediaTabText, { color: imagesLabelColor }]}
-            >
-              IMAGES
-            </Animated.Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.mediaTab}
-            onPress={() => handleMediaTabPress('videos')}
-          >
-            <Icon
-              name="playcircleo"
-              size={18}
-              color={activeMedia === 'videos' ? ACTIVE_COLOR : INACTIVE_COLOR}
-              style={styles.tabIcon}
-            />
-            <Animated.Text
-              style={[styles.mediaTabText, { color: videosLabelColor }]}
-            >
-              VIDEOS
-            </Animated.Text>
-          </TouchableOpacity>
-        </View>
+        {activeTab !== 'settings' && (
+          <>
+            <View style={styles.mediaTabs}>
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.tabIndicator,
+                  {
+                    width: TAB_WIDTH,
+                    transform: [{ translateX: tabIndicatorTranslate }],
+                  },
+                ]}
+              />
+              <TouchableOpacity
+                style={styles.mediaTab}
+                onPress={() => handleMediaTabPress('images')}
+              >
+                <Icon
+                  name="picture"
+                  size={18}
+                  color={
+                    activeMedia === 'images' ? ACTIVE_COLOR : INACTIVE_COLOR
+                  }
+                  style={styles.tabIcon}
+                />
+                <Animated.Text
+                  style={[styles.mediaTabText, { color: imagesLabelColor }]}
+                >
+                  IMAGES
+                </Animated.Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.mediaTab}
+                onPress={() => handleMediaTabPress('videos')}
+              >
+                <Icon
+                  name="playcircleo"
+                  size={18}
+                  color={
+                    activeMedia === 'videos' ? ACTIVE_COLOR : INACTIVE_COLOR
+                  }
+                  style={styles.tabIcon}
+                />
+                <Animated.Text
+                  style={[styles.mediaTabText, { color: videosLabelColor }]}
+                >
+                  VIDEOS
+                </Animated.Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Content with Smooth Swipe Gesture */}
-        <View style={styles.content} {...panResponder.panHandlers}>
-          <Animated.View
-            style={[
-              styles.contentSlider,
-              { transform: [{ translateX: contentTranslateX }] },
-            ]}
-          >
-            <View
-              pointerEvents={imagePointerEvents}
-              style={styles.contentPage}
-            >
-              <StatusListScreen
-                type="whatsapp"
-                mediaFilter="images"
-                activeTab={activeTab}
-                reloadSignal={reloadTick}
-              />
+            <View style={styles.content} {...panResponder.panHandlers}>
+              <Animated.View
+                style={[
+                  styles.contentSlider,
+                  { transform: [{ translateX: contentTranslateX }] },
+                ]}
+              >
+                <View
+                  pointerEvents={imagePointerEvents}
+                  style={styles.contentPage}
+                >
+                  <StatusListScreen
+                    type="whatsapp"
+                    mediaFilter="images"
+                    activeTab={activeTab === 'saved' ? 'saved' : 'status'}
+                    reloadSignal={reloadTick}
+                  />
+                </View>
+                <View
+                  pointerEvents={videoPointerEvents}
+                  style={styles.contentPage}
+                >
+                  <StatusListScreen
+                    type="whatsapp"
+                    mediaFilter="videos"
+                    activeTab={activeTab === 'saved' ? 'saved' : 'status'}
+                    reloadSignal={reloadTick}
+                  />
+                </View>
+              </Animated.View>
             </View>
-            <View
-              pointerEvents={videoPointerEvents}
-              style={styles.contentPage}
-            >
-              <StatusListScreen
-                type="whatsapp"
-                mediaFilter="videos"
-                activeTab={activeTab}
-                reloadSignal={reloadTick}
-              />
-            </View>
-          </Animated.View>
-        </View>
+          </>
+        )}
+
+        {activeTab === 'settings' && (
+          <View style={styles.contentStandalone}>
+            <SettingsScreen
+              onClose={() => setActiveTab(lastPrimaryTabRef.current)}
+            />
+          </View>
+        )}
 
         {/* Bottom Navigation */}
         <View
@@ -374,6 +410,8 @@ function AppContent() {
               activeTab === 'status' && styles.navButtonActive,
             ]}
             onPress={() => setActiveTab('status')}
+            accessibilityRole="button"
+            accessibilityLabel="Show recent statuses"
           >
             <View
               style={[
@@ -402,6 +440,8 @@ function AppContent() {
               activeTab === 'saved' && styles.navButtonActive,
             ]}
             onPress={() => setActiveTab('saved')}
+            accessibilityRole="button"
+            accessibilityLabel="Show saved items"
           >
             <View
               style={[
@@ -424,18 +464,38 @@ function AppContent() {
               Saved
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.navButton,
+              activeTab === 'settings' && styles.navButtonActive,
+            ]}
+            onPress={() => setActiveTab('settings')}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
+            <View
+              style={[
+                styles.navIconCircle,
+                activeTab === 'settings' && styles.navIconCircleActive,
+              ]}
+            >
+              <Icon
+                name="setting"
+                size={20}
+                color={activeTab === 'settings' ? '#00A884' : '#8696A0'}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navText,
+                activeTab === 'settings' && styles.navTextActive,
+              ]}
+            >
+              Settings
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Settings Modal */}
-      <Modal
-        visible={isSettingsVisible}
-        animationType="slide"
-        onRequestClose={() => setIsSettingsVisible(false)}
-        presentationStyle="fullScreen"
-      >
-        <SettingsScreen onClose={() => setIsSettingsVisible(false)} />
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -522,6 +582,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D1418',
     position: 'relative',
     overflow: 'hidden',
+  },
+  contentStandalone: {
+    flex: 1,
+    backgroundColor: '#0D1418',
   },
   contentSlider: {
     flexDirection: 'row',
