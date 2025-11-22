@@ -20,6 +20,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import { StatusFile } from '../types';
 import StatusViewer from '../components/StatusViewer';
 import { getStatusFiles, saveStatusToGallery } from '../utils/statusManager';
@@ -35,6 +36,23 @@ const savedCache = new Map<string, StatusFile[]>();
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
+
+const getOverlayIconColors = (
+  isSaved: boolean,
+  primaryColor: string,
+): { backgroundColor: string; borderColor: string } => {
+  if (isSaved) {
+    return {
+      backgroundColor: primaryColor,
+      borderColor: 'rgba(255, 255, 255, 0.4)',
+    };
+  }
+
+  return {
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  };
+};
 
 interface StatusListScreenProps {
   type: 'whatsapp' | 'business';
@@ -272,7 +290,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const renderItem = useCallback(
     ({ item }: { item: StatusFile }) => (
-      <View style={[styles.card, { backgroundColor: theme.surface }]}>
+      <View style={styles.card}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => setSelectedStatus(item)}
@@ -286,33 +304,35 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             </View>
           )}
         </TouchableOpacity>
-        <View style={styles.cardFooter}>
-          <Text style={[styles.timeText, { color: theme.textSecondary }]}>
-            {formatTime(item.timestamp)}
-          </Text>
-          <TouchableOpacity
-            style={styles.downloadButton}
-            onPress={() => handleSave(item)}
-            disabled={savingId === item.id || item.isSaved}
-          >
-            <View
-              style={[
-                styles.downloadIcon,
-                {
-                  backgroundColor: item.isSaved
-                    ? theme.primary
-                    : theme.textSecondary,
-                },
-              ]}
+        <LinearGradient
+          colors={['transparent', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.7)']}
+          style={styles.overlayGradient}
+          pointerEvents="box-none"
+        >
+          <View style={styles.overlayContent}>
+            <Text style={styles.overlayText}>{formatTime(item.timestamp)}</Text>
+            <TouchableOpacity
+              style={styles.overlayButton}
+              onPress={() => handleSave(item)}
+              disabled={savingId === item.id || item.isSaved}
+              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+              accessibilityRole="button"
             >
-              {item.isSaved ? (
-                <Icon name="check" size={18} color="#FFFFFF" />
-              ) : (
-                <Icon name="download" size={16} color="#FFFFFF" />
-              )}
-            </View>
-          </TouchableOpacity>
-        </View>
+              <View
+                style={[
+                  styles.overlayIcon,
+                  getOverlayIconColors(item.isSaved ?? false, theme.primary),
+                ]}
+              >
+                {item.isSaved ? (
+                  <Icon name="check" size={18} color="#FFFFFF" />
+                ) : (
+                  <Icon name="download" size={16} color="#FFFFFF" />
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
       </View>
     ),
     [savingId, theme],
@@ -396,6 +416,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
     width: CARD_WIDTH,
+    position: 'relative',
   },
   cardImage: {
     width: CARD_WIDTH,
@@ -419,24 +440,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardFooter: {
+  overlayGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
+  overlayContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  timeText: {
-    fontSize: 14,
+  overlayText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.35)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    marginRight: 12,
   },
-  downloadButton: {
-    padding: 4,
+  overlayButton: {
+    marginLeft: 'auto',
+    paddingVertical: 2,
   },
-  downloadIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  overlayIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
   },
   emptyContainer: {
     flex: 1,

@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 2,
   },
   footerText: {
     fontSize: 12,
