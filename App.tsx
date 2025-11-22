@@ -28,6 +28,7 @@ import {
 import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 
 type TabType = 'status' | 'saved' | 'settings';
 type MediaType = 'images' | 'videos';
@@ -41,7 +42,9 @@ function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AppContent />
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -67,6 +70,7 @@ function AppContent() {
   const navActiveCircleColor = isDark
     ? 'rgba(0, 168, 132, 0.2)'
     : 'rgba(37, 211, 102, 0.2)';
+  const { t } = useLanguage();
 
   const imagesLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
@@ -331,6 +335,8 @@ function AppContent() {
               <TouchableOpacity
                 style={styles.mediaTab}
                 onPress={() => handleMediaTabPress('images')}
+                accessibilityRole="button"
+                accessibilityLabel={t('tabs.imagesAccessibility')}
               >
                 <Icon
                   name="picture"
@@ -341,12 +347,14 @@ function AppContent() {
                 <Animated.Text
                   style={[styles.mediaTabText, { color: imagesLabelColor }]}
                 >
-                  IMAGES
+                  {t('tabs.images')}
                 </Animated.Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.mediaTab}
                 onPress={() => handleMediaTabPress('videos')}
+                accessibilityRole="button"
+                accessibilityLabel={t('tabs.videosAccessibility')}
               >
                 <Icon
                   name="playcircleo"
@@ -357,7 +365,7 @@ function AppContent() {
                 <Animated.Text
                   style={[styles.mediaTabText, { color: videosLabelColor }]}
                 >
-                  VIDEOS
+                  {t('tabs.videos')}
                 </Animated.Text>
               </TouchableOpacity>
             </View>
@@ -418,7 +426,7 @@ function AppContent() {
             ]}
             onPress={() => setActiveTab('status')}
             accessibilityRole="button"
-            accessibilityLabel="Show recent statuses"
+            accessibilityLabel={t('tabs.statusAccessibility')}
           >
             <View
               style={[
@@ -444,7 +452,7 @@ function AppContent() {
                 activeTab === 'status' && { color: activeColor },
               ]}
             >
-              Status
+              {t('tabs.status')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -454,7 +462,7 @@ function AppContent() {
             ]}
             onPress={() => setActiveTab('saved')}
             accessibilityRole="button"
-            accessibilityLabel="Show saved items"
+            accessibilityLabel={t('tabs.savedAccessibility')}
           >
             <View
               style={[
@@ -480,7 +488,7 @@ function AppContent() {
                 activeTab === 'saved' && { color: activeColor },
               ]}
             >
-              Saved
+              {t('tabs.saved')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -490,7 +498,7 @@ function AppContent() {
             ]}
             onPress={() => setActiveTab('settings')}
             accessibilityRole="button"
-            accessibilityLabel="Open settings"
+            accessibilityLabel={t('tabs.settingsAccessibility')}
           >
             <View
               style={[
@@ -516,7 +524,7 @@ function AppContent() {
                 activeTab === 'settings' && { color: activeColor },
               ]}
             >
-              Settings
+              {t('tabs.settings')}
             </Text>
           </TouchableOpacity>
         </View>

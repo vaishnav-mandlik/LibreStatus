@@ -3,18 +3,21 @@ import {
   Alert,
   KeyboardAvoidingView,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import * as RNLocalize from 'react-native-localize';
 import { useTheme } from '../context/ThemeContext';
 import { getDefaultDialCode } from '../utils/countryDialCodes';
+import { LanguageCode, useLanguage } from '../context/LanguageContext';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -22,11 +25,13 @@ interface SettingsScreenProps {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, themeMode, setThemeMode } = useTheme();
+  const { language, setLanguage, t, options } = useLanguage();
   const [countryCode, setCountryCode] = useState(() =>
     getDefaultDialCode(RNLocalize.getCountry()),
   );
   const [dmPhone, setDmPhone] = useState('');
   const [dmMessage, setDmMessage] = useState('');
+  const [isLanguageModalVisible, setLanguageModalVisible] = useState(false);
 
   const sanitizedCountryCode = useMemo(
     () => countryCode.replace(/[^\d]/g, ''),
@@ -53,36 +58,43 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   }, [setThemeMode, themeMode]);
 
   const themeLabel = useMemo(() => {
-    if (themeMode === 'system') return 'Follow system theme';
-    if (themeMode === 'dark') return 'Dark mode';
-    return 'Light mode';
-  }, [themeMode]);
+    if (themeMode === 'system') return t('settings.themeFollowSystem');
+    if (themeMode === 'dark') return t('settings.themeDark');
+    return t('settings.themeLight');
+  }, [t, themeMode]);
 
   const themeChipText = useMemo(() => {
-    if (themeMode === 'system') return 'System';
-    if (themeMode === 'dark') return 'Dark';
-    return 'Light';
-  }, [themeMode]);
+    if (themeMode === 'system') return t('settings.themeSystemShort');
+    if (themeMode === 'dark') return t('settings.themeDarkShort');
+    return t('settings.themeLightShort');
+  }, [t, themeMode]);
+
+  const selectedLanguageOption = useMemo(() => {
+    return options.find(option => option.code === language) || options[0];
+  }, [language, options]);
 
   const openExternalLink = useCallback(
     async (url: string, fallback: string) => {
       try {
         const supported = await Linking.canOpenURL(url);
         if (!supported) {
-          Alert.alert('Unavailable', fallback);
+          Alert.alert(t('general.unavailableTitle'), fallback);
           return;
         }
         await Linking.openURL(url);
       } catch {
-        Alert.alert('Unavailable', fallback);
+        Alert.alert(t('general.unavailableTitle'), fallback);
       }
     },
-    [],
+    [t],
   );
 
   const handleShareApp = useCallback(() => {
-    Alert.alert('Share app', 'Tell your friends about this app!');
-  }, []);
+    Alert.alert(
+      t('settings.shareAppAlertTitle'),
+      t('settings.shareAppAlertMessage'),
+    );
+  }, [t]);
 
   const handleCountryCodeChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/[^\d]/g, '');
@@ -97,8 +109,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const handleDirectMessage = useCallback(async () => {
     if (!canSendDirectMessage) {
       Alert.alert(
-        'Phone number required',
-        'Please enter a valid country code and phone number.',
+        t('settings.directMessageAlertTitle'),
+        t('settings.directMessageAlertMessage'),
       );
       return;
     }
@@ -117,21 +129,31 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       await Linking.openURL(webUrl);
     } catch {
       Alert.alert(
-        'Unable to open WhatsApp',
-        'Please check if WhatsApp is installed.',
+        t('settings.directMessageAlertTitle'),
+        t('settings.directMessageWhatsappError'),
       );
     }
-  }, [canSendDirectMessage, dmMessage, fullPhoneNumber]);
+  }, [canSendDirectMessage, dmMessage, fullPhoneNumber, t]);
+
+  const handleLanguageSelect = useCallback(
+    (code: LanguageCode) => {
+      setLanguage(code);
+      setLanguageModalVisible(false);
+    },
+    [setLanguage],
+  );
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          {t('settings.title')}
+        </Text>
         <TouchableOpacity
           style={styles.headerIcon}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Close settings"
+          accessibilityLabel={t('settings.accessibility.close')}
         >
           <Icon name="close" size={20} color={theme.textSecondary} />
         </TouchableOpacity>
@@ -147,14 +169,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Appearance</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              {t('settings.appearance')}
+            </Text>
 
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
               onPress={cycleThemeMode}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Change theme"
+              accessibilityLabel={t('settings.accessibility.changeTheme')}
             >
               <View style={styles.rowLeft}>
                 <View
@@ -166,7 +190,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Icon name="skin" size={18} color={theme.primary} />
                 </View>
                 <View style={styles.flexOne}>
-                  <Text style={[styles.rowTitle, { color: theme.text }]}>Theme</Text>
+                  <Text style={[styles.rowTitle, { color: theme.text }]}>
+                    {t('settings.themeTitle')}
+                  </Text>
                   <Text
                     style={[styles.rowSubtitle, { color: theme.textSecondary }]}
                   >
@@ -175,7 +201,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 </View>
               </View>
               <View
-                style={[styles.valueChip, { backgroundColor: theme.surfaceVariant }]}
+                style={[
+                  styles.valueChip,
+                  { backgroundColor: theme.surfaceVariant },
+                ]}
               >
                 <Text style={[styles.valueChipText, { color: theme.primary }]}>
                   {themeChipText}
@@ -185,7 +214,66 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Direct Message</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              {t('settings.languageTitle')}
+            </Text>
+
+            <View style={[styles.card, { backgroundColor: theme.surface }]}>
+              <View style={styles.cardHeader}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon name="earth" size={18} color={theme.primary} />
+                </View>
+                <View style={styles.flexOne}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>
+                    {t('settings.languageTitle')}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardSubtitle,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    {t('settings.languageDescription')}
+                  </Text>
+                </View>
+              </View>
+              <View>
+                <Text
+                  style={[styles.dropdownLabel, { color: theme.textSecondary }]}
+                >
+                  {t('settings.languageSelectLabel')}
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.dropdownField,
+                    {
+                      backgroundColor: theme.surfaceVariant,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  onPress={() => setLanguageModalVisible(true)}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('settings.languageModalTitle')}
+                >
+                  <Text style={[styles.dropdownValue, { color: theme.text }]}>
+                    {selectedLanguageOption.label}
+                  </Text>
+                  <Icon name="down" size={16} color={theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              {t('settings.directMessageTitle')}
+            </Text>
 
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
               <View style={styles.cardHeader}>
@@ -198,11 +286,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Icon name="message1" size={18} color={theme.primary} />
                 </View>
                 <View style={styles.flexOne}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>Chat without saving contact</Text>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>
+                    {t('settings.directMessageCardTitle')}
+                  </Text>
                   <Text
-                    style={[styles.cardSubtitle, { color: theme.textSecondary }]}
+                    style={[
+                      styles.cardSubtitle,
+                      { color: theme.textSecondary },
+                    ]}
                   >
-                    Send messages instantly. Country code is auto-detected—adjust if needed.
+                    {t('settings.directMessageCardSubtitle')}
                   </Text>
                 </View>
               </View>
@@ -220,7 +313,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   ]}
                   value={countryCode}
                   onChangeText={handleCountryCodeChange}
-                  placeholder="+1"
+                  placeholder={t('settings.directMessageCountryPlaceholder')}
                   placeholderTextColor={theme.textSecondary}
                   keyboardType="phone-pad"
                   returnKeyType="next"
@@ -240,7 +333,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   ]}
                   value={dmPhone}
                   onChangeText={handlePhoneNumberChange}
-                  placeholder="9876543210"
+                  placeholder={t('settings.directMessageNumberPlaceholder')}
                   placeholderTextColor={theme.textSecondary}
                   keyboardType="phone-pad"
                   returnKeyType="next"
@@ -261,7 +354,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 ]}
                 value={dmMessage}
                 onChangeText={setDmMessage}
-                placeholder="Optional message..."
+                placeholder={t('settings.directMessageMessagePlaceholder')}
                 placeholderTextColor={theme.textSecondary}
                 multiline
                 numberOfLines={3}
@@ -283,20 +376,24 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !canSendDirectMessage }}
               >
-                <Text style={styles.primaryButtonText}>Open in WhatsApp</Text>
+                <Text style={styles.primaryButtonText}>
+                  {t('settings.directMessageButton')}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>About</Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              {t('settings.aboutTitle')}
+            </Text>
 
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
               onPress={handleShareApp}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Share this app"
+              accessibilityLabel={t('settings.aboutShare')}
             >
               <View style={styles.rowLeft}>
                 <View
@@ -307,7 +404,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 >
                   <Icon name="sharealt" size={18} color={theme.primary} />
                 </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>Share app</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  {t('settings.aboutShare')}
+                </Text>
               </View>
               <Icon name="right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -317,12 +416,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
               onPress={() =>
                 openExternalLink(
                   'https://faq.whatsapp.com/',
-                  'Unable to open help center',
+                  t('general.unavailableMessage'),
                 )
               }
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Open help"
+              accessibilityLabel={t('settings.aboutHelp')}
             >
               <View style={styles.rowLeft}>
                 <View
@@ -331,19 +430,75 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                     { backgroundColor: theme.surfaceVariant },
                   ]}
                 >
-                  <Icon name="questioncircleo" size={18} color={theme.primary} />
+                  <Icon
+                    name="questioncircleo"
+                    size={18}
+                    color={theme.primary}
+                  />
                 </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>Help</Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  {t('settings.aboutHelp')}
+                </Text>
               </View>
               <Icon name="right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}>Version 1.0.0</Text>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+              {t('settings.versionLabel')}
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={isLanguageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableWithoutFeedback
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback>
+              <View
+                style={[styles.modalCard, { backgroundColor: theme.surface }]}
+              >
+                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                  {t('settings.languageModalTitle')}
+                </Text>
+                {options.map(option => {
+                  const isSelected = option.code === language;
+                  return (
+                    <TouchableOpacity
+                      key={option.code}
+                      style={[
+                        styles.modalOption,
+                        isSelected && {
+                          backgroundColor: theme.surfaceVariant,
+                        },
+                      ]}
+                      onPress={() => handleLanguageSelect(option.code)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[styles.modalOptionText, { color: theme.text }]}
+                      >
+                        {option.label}
+                      </Text>
+                      {isSelected && (
+                        <Icon name="check" size={16} color={theme.primary} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -494,6 +649,55 @@ const styles = StyleSheet.create({
   },
   flexOne: {
     flex: 1,
+  },
+  dropdownLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  dropdownField: {
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownValue: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 30, 0.45)',
+    justifyContent: 'flex-end',
+    padding: 16,
+  },
+  modalCard: {
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    gap: 6,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
+  modalOptionText: {
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
 
