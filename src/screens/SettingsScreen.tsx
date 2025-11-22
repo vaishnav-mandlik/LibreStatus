@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -14,11 +13,11 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
-import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import * as RNLocalize from 'react-native-localize';
 import { useTheme } from '../context/ThemeContext';
 import { getDefaultDialCode } from '../utils/countryDialCodes';
 import { LanguageCode, useLanguage } from '../context/LanguageContext';
+import { useFeedback } from '../context/FeedbackContext';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -27,6 +26,7 @@ interface SettingsScreenProps {
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, themeMode, setThemeMode } = useTheme();
   const { language, setLanguage, t, options } = useLanguage();
+  const { showMessage } = useFeedback();
   const [countryCode, setCountryCode] = useState(() =>
     getDefaultDialCode(RNLocalize.getCountry()),
   );
@@ -79,23 +79,32 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       try {
         const supported = await Linking.canOpenURL(url);
         if (!supported) {
-          Alert.alert(t('general.unavailableTitle'), fallback);
+          showMessage({
+            title: t('general.unavailableTitle'),
+            message: fallback,
+            type: 'warning',
+          });
           return;
         }
         await Linking.openURL(url);
       } catch {
-        Alert.alert(t('general.unavailableTitle'), fallback);
+        showMessage({
+          title: t('general.unavailableTitle'),
+          message: fallback,
+          type: 'warning',
+        });
       }
     },
-    [t],
+    [showMessage, t],
   );
 
   const handleShareApp = useCallback(() => {
-    Alert.alert(
-      t('settings.shareAppAlertTitle'),
-      t('settings.shareAppAlertMessage'),
-    );
-  }, [t]);
+    showMessage({
+      title: t('settings.shareAppAlertTitle'),
+      message: t('settings.shareAppAlertMessage'),
+      type: 'info',
+    });
+  }, [showMessage, t]);
 
   const handleCountryCodeChange = useCallback((value: string) => {
     const digitsOnly = value.replace(/[^\d]/g, '');
@@ -109,10 +118,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
   const handleDirectMessage = useCallback(async () => {
     if (!canSendDirectMessage) {
-      Alert.alert(
-        t('settings.directMessageAlertTitle'),
-        t('settings.directMessageAlertMessage'),
-      );
+      showMessage({
+        title: t('settings.directMessageAlertTitle'),
+        message: t('settings.directMessageAlertMessage'),
+        type: 'warning',
+      });
       return;
     }
 
@@ -129,12 +139,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
       }
       await Linking.openURL(webUrl);
     } catch {
-      Alert.alert(
-        t('settings.directMessageAlertTitle'),
-        t('settings.directMessageWhatsappError'),
-      );
+      showMessage({
+        title: t('settings.directMessageAlertTitle'),
+        message: t('settings.directMessageWhatsappError'),
+        type: 'error',
+      });
     }
-  }, [canSendDirectMessage, dmMessage, fullPhoneNumber, t]);
+  }, [canSendDirectMessage, dmMessage, fullPhoneNumber, showMessage, t]);
 
   const handleLanguageSelect = useCallback(
     (code: LanguageCode) => {

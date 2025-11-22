@@ -14,7 +14,6 @@ import {
   Text,
   ActivityIndicator,
   Share,
-  Alert,
   Pressable,
   Platform,
   StatusBar,
@@ -26,6 +25,7 @@ import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIc
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import type { OnLoadData, OnProgressData } from 'react-native-video';
 import type { StatusFile } from '../types';
+import { useFeedback } from '../context/FeedbackContext';
 
 const formatPlaybackTime = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -102,6 +102,7 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
   onSave,
   isSaving,
 }) => {
+  const { showMessage } = useFeedback();
   const videoRef = useRef<any>(null);
   const progressBarWidth = useRef(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -162,9 +163,13 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
         title: 'Share Status',
       });
     } catch {
-      Alert.alert('Error', 'Failed to share status');
+      showMessage({
+        title: 'Share failed',
+        message: 'We could not share this status. Try again shortly.',
+        type: 'error',
+      });
     }
-  }, [status]);
+  }, [showMessage, status]);
 
   const handleRepost = useCallback(async () => {
     if (!status) {
@@ -176,10 +181,11 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
         Platform.OS === 'ios' ? 'whatsapp://' : 'whatsapp://send';
       const hasWhatsapp = await Linking.canOpenURL(whatsappScheme);
       if (!hasWhatsapp) {
-        Alert.alert(
-          'WhatsApp not installed',
-          'Install WhatsApp to repost this status.',
-        );
+        showMessage({
+          title: 'WhatsApp not installed',
+          message: 'Install WhatsApp to repost this status.',
+          type: 'warning',
+        });
         return;
       }
 
@@ -190,9 +196,13 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
         title: 'Share to WhatsApp',
       });
     } catch {
-      Alert.alert('Error', 'Failed to share to WhatsApp.');
+      showMessage({
+        title: 'Share failed',
+        message: 'Could not share to WhatsApp. Try again shortly.',
+        type: 'error',
+      });
     }
-  }, [status]);
+  }, [showMessage, status]);
 
   const handleTogglePlayback = useCallback(() => {
     if (status?.type !== 'video') {

@@ -29,6 +29,7 @@ import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+import { FeedbackProvider } from './src/context/FeedbackContext';
 
 type TabType = 'status' | 'saved' | 'settings';
 type MediaType = 'images' | 'videos';
@@ -43,7 +44,9 @@ function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <LanguageProvider>
-          <AppContent />
+          <FeedbackProvider>
+            <AppContent />
+          </FeedbackProvider>
         </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>

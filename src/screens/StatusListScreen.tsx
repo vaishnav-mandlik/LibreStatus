@@ -10,7 +10,6 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  Alert,
   Text,
   TouchableOpacity,
   Platform,
@@ -30,6 +29,7 @@ import {
 } from '../utils/permissions';
 import { hasFolderAccess, requestFolderAccess } from '../utils/folderPicker';
 import { useTheme } from '../context/ThemeContext';
+import { useFeedback } from '../context/FeedbackContext';
 
 const statusCache = new Map<string, StatusFile[]>();
 const savedCache = new Map<string, StatusFile[]>();
@@ -68,6 +68,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   reloadSignal,
 }) => {
   const { theme } = useTheme();
+  const { showMessage } = useFeedback();
   const cacheKey = `${type}-statuses`;
   const savedCacheKey = `${type}-saved`;
 
@@ -155,47 +156,58 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
           if (!safUri) {
             setLoading(false);
-            Alert.alert(
-              '📁 Select WhatsApp Status Folder',
-              `You'll now select the ${
-                type === 'business' ? 'WhatsApp Business' : 'WhatsApp'
-              } status folder.\n\n` +
-                `The folder picker will open near the correct location.\n\n` +
-                `📝 Steps:\n` +
-                `1. Look for ".Statuses" folder\n` +
-                `2. If not visible, navigate up to find:\n` +
+            const openPicker = () => {
+              setLoading(true);
+              (async () => {
+                const uri = await requestFolderAccess(type);
+                if (uri) {
+                  const grantedFiles = await getStatusFiles(type);
+                  console.log(`📊 Loaded ${grantedFiles.length} status files`);
+                  const filesWithSavedState = markSavedStatuses(grantedFiles);
+                  setStatuses(filesWithSavedState);
+                  statusCache.set(cacheKey, filesWithSavedState);
+                }
+                setLoading(false);
+              })().catch(error => {
+                console.error('❌ Error requesting folder access:', error);
+                setLoading(false);
+                showMessage({
+                  title: 'Something went wrong',
+                  message: 'Unable to open folder picker. Please try again.',
+                  type: 'error',
+                });
+              });
+            };
+
+            showMessage({
+              title: 'Select WhatsApp Status Folder',
+              message:
+                `You'll now select the ${
+                  type === 'business' ? 'WhatsApp Business' : 'WhatsApp'
+                } status folder.\n\n` +
+                'The folder picker will open near the correct location.\n\n' +
+                '📝 Steps:\n' +
+                '1. Look for ".Statuses" folder\n' +
+                '2. If not visible, navigate up to find:\n' +
                 `   Android → media → com.${
                   type === 'business' ? 'whatsapp.w4b' : 'whatsapp'
                 }\n` +
-                `   → WhatsApp → Media → .Statuses\n` +
-                `3. Tap "Use this folder" at the bottom\n\n` +
-                `This grants access to view statuses.`,
-              [
+                '   → WhatsApp → Media → .Statuses\n' +
+                '3. Tap "Use this folder" at the bottom\n\n' +
+                'This grants access to view statuses.',
+              type: 'info',
+              actions: [
                 {
-                  text: 'Cancel',
-                  style: 'cancel',
+                  label: 'Cancel',
+                  variant: 'secondary',
                   onPress: () => setLoading(false),
                 },
                 {
-                  text: 'Open Picker',
-                  onPress: async () => {
-                    setLoading(true);
-                    const uri = await requestFolderAccess(type);
-                    if (uri) {
-                      const grantedFiles = await getStatusFiles(type);
-                      console.log(
-                        `📊 Loaded ${grantedFiles.length} status files`,
-                      );
-                      const filesWithSavedState =
-                        markSavedStatuses(grantedFiles);
-                      setStatuses(filesWithSavedState);
-                      statusCache.set(cacheKey, filesWithSavedState);
-                    }
-                    setLoading(false);
-                  },
+                  label: 'Open Picker',
+                  onPress: openPicker,
                 },
               ],
-            );
+            });
             return;
           }
 
@@ -223,12 +235,16 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         statusCache.set(cacheKey, filesWithSavedState);
       } catch (error) {
         console.error('❌ Error loading statuses:', error);
-        Alert.alert('Error', 'Failed to load statuses');
+        showMessage({
+          title: 'Failed to load statuses',
+          message: 'Please try again in a moment.',
+          type: 'error',
+        });
       } finally {
         setLoading(false);
       }
     },
-    [cacheKey, markSavedStatuses, type],
+    [cacheKey, markSavedStatuses, showMessage, type],
   );
 
   useEffect(() => {
@@ -241,12 +257,16 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     loadStatuses(true);
   }, [loadStatuses]);
 
-  const handleSave = async (status: StatusFile) => {
+  const handleSave = useCallback(async (status: StatusFile) => {
     setSavingId(status.id);
     try {
       const success = await saveStatusToGallery(status);
       if (success) {
-        Alert.alert('✓ Saved', 'Status saved to gallery!');
+        showMessage({
+          title: 'Saved to gallery',
+          message: 'Status is now available in your downloads.',
+          type: 'success',
+        });
         const savedStatus = { ...status, isSaved: true };
         setStatuses(prev =>
           prev.map(s => (s.id === status.id ? savedStatus : s)),
@@ -259,15 +279,23 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           return prev;
         });
       } else {
-        Alert.alert('Error', 'Failed to save status');
+        showMessage({
+          title: 'Failed to save',
+          message: 'Please try again after a moment.',
+          type: 'error',
+        });
       }
     } catch (error) {
       console.error('Error saving status:', error);
-      Alert.alert('Error', 'Failed to save status');
+      showMessage({
+        title: 'Failed to save',
+        message: 'Please try again after a moment.',
+        type: 'error',
+      });
     } finally {
       setSavingId(null);
     }
-  };
+  }, [showMessage]);
 
   const filteredStatuses = useMemo(() => {
     const sourceStatuses = activeTab === 'saved' ? savedStatuses : statuses;
@@ -342,7 +370,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         </TouchableOpacity>
       </View>
     ),
-    [savingId, theme],
+    [handleSave, savingId, theme],
   );
 
   if (filteredStatuses.length === 0 && !loading) {

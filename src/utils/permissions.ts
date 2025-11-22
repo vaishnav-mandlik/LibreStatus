@@ -1,6 +1,7 @@
-import { Platform, PermissionsAndroid, Alert, Linking } from 'react-native';
+import { Platform, PermissionsAndroid, Linking } from 'react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import RNFS from 'react-native-fs';
+import { showFeedback } from '../context/FeedbackContext';
 
 export const checkStoragePermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') {
@@ -88,23 +89,25 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       // Android 11-12 - Need special "All files access" permission
       console.log('📂 Android 11+: Need All Files Access...');
 
-      Alert.alert(
-        'Files Access Required',
-        'To view WhatsApp statuses, this app needs "All files access" permission.\n\nYou will be redirected to Settings.',
-        [
+      showFeedback({
+        title: 'Files Access Required',
+        message:
+          'To view WhatsApp statuses, grant "All files access" when prompted in Settings.',
+        type: 'warning',
+        actions: [
           {
-            text: 'Cancel',
-            style: 'cancel',
+            label: 'Not now',
+            variant: 'secondary',
             onPress: () => {},
           },
           {
-            text: 'Open Settings',
-            onPress: async () => {
-              await Linking.openSettings();
+            label: 'Open Settings',
+            onPress: () => {
+              Linking.openSettings().catch(() => undefined);
             },
           },
         ],
-      );
+      });
 
       return false;
     } else if (androidVersion >= 23) {
@@ -144,12 +147,22 @@ export const requestStoragePermission = async (): Promise<boolean> => {
 };
 
 const showSettingsAlert = () => {
-  Alert.alert(
-    'Permission Required',
-    'Please enable storage permissions from settings to use this app.',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Open Settings', onPress: () => Linking.openSettings() },
+  showFeedback({
+    title: 'Permission Required',
+    message: 'Enable storage permissions in Settings to continue.',
+    type: 'warning',
+    actions: [
+      {
+        label: 'Cancel',
+        variant: 'secondary',
+        onPress: () => {},
+      },
+      {
+        label: 'Open Settings',
+        onPress: () => {
+          Linking.openSettings().catch(() => undefined);
+        },
+      },
     ],
-  );
+  });
 };
