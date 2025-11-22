@@ -5,12 +5,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
-  Alert,
   Animated,
   AppState,
   AppStateStatus,
   Dimensions,
-  Linking,
+  Easing,
   Modal,
   PanResponder,
   StatusBar,
@@ -38,6 +37,7 @@ const SWIPE_THRESHOLD = width * 0.2;
 const TAB_WIDTH = width / 2;
 const ACTIVE_COLOR = '#00A884';
 const INACTIVE_COLOR = '#8696A0';
+const SLIDE_DURATION = 340;
 
 function App() {
   return (
@@ -85,59 +85,28 @@ function AppContent() {
     [mediaProgress],
   );
 
-  const imageOpacity = mediaProgress;
-
-  const videoOpacity = useMemo(
-    () =>
-      mediaProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 0],
-      }),
-    [mediaProgress],
-  );
-
-  const imageScale = useMemo(
-    () =>
-      mediaProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.98, 1],
-      }),
-    [mediaProgress],
-  );
-
-  const videoScale = useMemo(
-    () =>
-      mediaProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 0.98],
-      }),
-    [mediaProgress],
-  );
-
-  const imageParallax = useMemo(
-    () =>
-      mediaProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [-16, 0],
-      }),
-    [mediaProgress],
-  );
-
-  const videoParallax = useMemo(
-    () =>
-      mediaProgress.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 16],
-      }),
-    [mediaProgress],
-  );
-
   const imagePointerEvents = activeMedia === 'images' ? 'auto' : 'none';
   const videoPointerEvents = activeMedia === 'videos' ? 'auto' : 'none';
 
   useEffect(() => {
     activeMediaRef.current = activeMedia;
   }, [activeMedia]);
+
+  const animateProgressTo = (value: number, onComplete?: () => void) => {
+    mediaProgress.stopAnimation();
+    isAnimating.current = true;
+    Animated.timing(mediaProgress, {
+      toValue: value,
+      duration: SLIDE_DURATION,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      isAnimating.current = false;
+      if (onComplete) {
+        onComplete();
+      }
+    });
+  };
 
   const shouldCaptureHorizontalSwipe = (gestureState: {
     dx: number;
@@ -169,20 +138,9 @@ function AppContent() {
       return;
     }
 
-    isAnimating.current = true;
-    mediaProgress.stopAnimation();
-
     activeMediaRef.current = nextMedia;
     setActiveMedia(nextMedia);
-
-    Animated.spring(mediaProgress, {
-      toValue: nextMedia === 'images' ? 1 : 0,
-      tension: 180,
-      friction: 18,
-      useNativeDriver: true,
-    }).start(() => {
-      isAnimating.current = false;
-    });
+    animateProgressTo(nextMedia === 'images' ? 1 : 0);
   };
 
   const handleMediaTabPress = (target: MediaType) => {
@@ -198,8 +156,11 @@ function AppContent() {
       onMoveShouldSetPanResponderCapture: (_, gestureState) =>
         shouldCaptureHorizontalSwipe(gestureState),
       onPanResponderGrant: () => {
-        if (isAnimating.current) return;
-        mediaProgress.stopAnimation();
+        if (isAnimating.current) {
+          mediaProgress.stopAnimation(() => {
+            isAnimating.current = false;
+          });
+        }
       },
       onPanResponderMove: (_, gestureState) => {
         if (isAnimating.current) return;
@@ -237,22 +198,10 @@ function AppContent() {
           }
         }
 
-        Animated.spring(mediaProgress, {
-          toValue: currentMedia === 'images' ? 1 : 0,
-          tension: 260,
-          friction: 20,
-          useNativeDriver: true,
-        }).start();
+        animateProgressTo(currentMedia === 'images' ? 1 : 0);
       },
       onPanResponderTerminate: () => {
-        if (isAnimating.current) return;
-
-        Animated.spring(mediaProgress, {
-          toValue: activeMediaRef.current === 'images' ? 1 : 0,
-          tension: 260,
-          friction: 20,
-          useNativeDriver: true,
-        }).start();
+        animateProgressTo(activeMediaRef.current === 'images' ? 1 : 0);
       },
     }),
   ).current;
@@ -271,33 +220,40 @@ function AppContent() {
     return () => subscription.remove();
   }, []);
 
-  const openWhatsApp = async () => {
-    try {
-      // Open WhatsApp home screen. This avoids "Invalid chat link" errors.
-      const appScheme = 'whatsapp://app';
-      const canOpenApp = await Linking.canOpenURL(appScheme);
-      if (canOpenApp) {
-        await Linking.openURL(appScheme);
-        return;
-      }
-      // Fallback: open a compose screen with a blank message (encoded space)
-      const composeScheme = 'whatsapp://send?text=%20';
-      const canOpenCompose = await Linking.canOpenURL(composeScheme);
-      if (canOpenCompose) {
-        await Linking.openURL(composeScheme);
-        return;
-      }
-      const playStoreUrl = 'market://details?id=com.whatsapp';
-      const canOpenStore = await Linking.canOpenURL(playStoreUrl);
-      if (canOpenStore) {
-        await Linking.openURL(playStoreUrl);
-        return;
-      }
-      Alert.alert('WhatsApp not found', 'Please install WhatsApp to continue.');
-    } catch {
-      Alert.alert('Error', 'Unable to open WhatsApp.');
-    }
-  };
+  /*
+   * Helper for opening WhatsApp when header shortcuts are re-enabled.
+   * Uncomment the header section below to surface these actions again.
+   */
+  // const openWhatsApp = async () => {
+  //   try {
+  //     // Open WhatsApp home screen. This avoids "Invalid chat link" errors.
+  //     const appScheme = 'whatsapp://app';
+  //     const canOpenApp = await Linking.canOpenURL(appScheme);
+  //     if (canOpenApp) {
+  //       await Linking.openURL(appScheme);
+  //       return;
+  //     }
+  //     // Fallback: open a compose screen with a blank message (encoded space)
+  //     const composeScheme = 'whatsapp://send?text=%20';
+  //     const canOpenCompose = await Linking.canOpenURL(composeScheme);
+  //     if (canOpenCompose) {
+  //       await Linking.openURL(composeScheme);
+  //       return;
+  //     }
+  //     const playStoreUrl = 'market://details?id=com.whatsapp';
+  //     const canOpenStore = await Linking.canOpenURL(playStoreUrl);
+  //     if (canOpenStore) {
+  //       await Linking.openURL(playStoreUrl);
+  //       return;
+  //     }
+  //     Alert.alert(
+  //       'WhatsApp not found',
+  //       'Please install WhatsApp to continue.',
+  //     );
+  //   } catch {
+  //     Alert.alert('Error', 'Unable to open WhatsApp.');
+  //   }
+  // };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -380,18 +336,9 @@ function AppContent() {
               { transform: [{ translateX: contentTranslateX }] },
             ]}
           >
-            <Animated.View
+            <View
               pointerEvents={imagePointerEvents}
-              style={[
-                styles.contentPage,
-                {
-                  opacity: imageOpacity,
-                  transform: [
-                    { scale: imageScale },
-                    { translateX: imageParallax },
-                  ],
-                },
-              ]}
+              style={styles.contentPage}
             >
               <StatusListScreen
                 type="whatsapp"
@@ -399,19 +346,10 @@ function AppContent() {
                 activeTab={activeTab}
                 reloadSignal={reloadTick}
               />
-            </Animated.View>
-            <Animated.View
+            </View>
+            <View
               pointerEvents={videoPointerEvents}
-              style={[
-                styles.contentPage,
-                {
-                  opacity: videoOpacity,
-                  transform: [
-                    { scale: videoScale },
-                    { translateX: videoParallax },
-                  ],
-                },
-              ]}
+              style={styles.contentPage}
             >
               <StatusListScreen
                 type="whatsapp"
@@ -419,7 +357,7 @@ function AppContent() {
                 activeTab={activeTab}
                 reloadSignal={reloadTick}
               />
-            </Animated.View>
+            </View>
           </Animated.View>
         </View>
 
