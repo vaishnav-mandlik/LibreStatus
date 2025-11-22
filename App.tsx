@@ -308,7 +308,7 @@ function AppContent() {
       />
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        {/* <View style={styles.header}>
           <Text style={styles.headerTitle}>Status Saver Pro</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity style={styles.iconButton} onPress={openWhatsApp}>
@@ -324,7 +324,7 @@ function AppContent() {
               <Icon name="setting" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Media Tabs */}
         <View style={styles.mediaTabs}>
@@ -599,9 +599,6 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     backgroundColor: '#1C2C33',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -612,6 +609,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 18,
   },
   navButtonActive: {},
   navIconCircle: {
@@ -621,9 +620,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
+    backgroundColor: 'rgba(134, 150, 160, 0.12)',
   },
   navIconCircleActive: {
-    backgroundColor: 'rgba(0, 168, 132, 0.15)',
+    backgroundColor: 'rgba(0, 168, 132, 0.2)',
   },
   navText: {
     fontSize: 12,
