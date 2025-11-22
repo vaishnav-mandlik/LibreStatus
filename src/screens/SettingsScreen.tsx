@@ -6,7 +6,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,74 +19,62 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
-  const { theme, themeMode, setThemeMode, isDark } = useTheme();
-
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-  const [notifyOnNewStatus, setNotifyOnNewStatus] = useState(false);
-  const [autoCleanEnabled, setAutoCleanEnabled] = useState(true);
+  const { theme, themeMode, setThemeMode } = useTheme();
   const [dmPhone, setDmPhone] = useState('');
   const [dmMessage, setDmMessage] = useState('');
 
   const cleanedPhone = useMemo(() => dmPhone.replace(/[^\d]/g, ''), [dmPhone]);
   const canSendDirectMessage = cleanedPhone.length >= 8;
-  const primaryButtonDynamicStyle = useMemo(
-    () => ({
-      backgroundColor: canSendDirectMessage ? theme.primary : theme.border,
-      opacity: canSendDirectMessage ? 1 : 0.7,
-    }),
-    [canSendDirectMessage, theme.border, theme.primary],
-  );
 
-  const handleThemeChange = useCallback(() => {
+  const cycleThemeMode = useCallback(() => {
     if (themeMode === 'light') {
       setThemeMode('dark');
-    } else if (themeMode === 'dark') {
-      setThemeMode('system');
-    } else {
-      setThemeMode('light');
+      return;
     }
+    if (themeMode === 'dark') {
+      setThemeMode('system');
+      return;
+    }
+    setThemeMode('light');
   }, [setThemeMode, themeMode]);
 
-  const getThemeLabel = useCallback(() => {
-    if (themeMode === 'system') return 'Auto (System)';
-    return themeMode === 'dark' ? 'Dark Mode' : 'Light Mode';
+  const themeLabel = useMemo(() => {
+    if (themeMode === 'system') return 'Follow system theme';
+    if (themeMode === 'dark') return 'Dark mode';
+    return 'Light mode';
+  }, [themeMode]);
+
+  const themeChipText = useMemo(() => {
+    if (themeMode === 'system') return 'System';
+    if (themeMode === 'dark') return 'Dark';
+    return 'Light';
   }, [themeMode]);
 
   const openExternalLink = useCallback(
-    async (url: string, fallbackMessage: string) => {
+    async (url: string, fallback: string) => {
       try {
         const supported = await Linking.canOpenURL(url);
         if (!supported) {
-          Alert.alert('Unavailable', fallbackMessage);
+          Alert.alert('Unavailable', fallback);
           return;
         }
         await Linking.openURL(url);
       } catch {
-        Alert.alert('Unavailable', fallbackMessage);
+        Alert.alert('Unavailable', fallback);
       }
     },
     [],
   );
 
-  const handleClearCache = useCallback(() => {
-    Alert.alert(
-      'Cleanup Scheduled',
-      'Saved statuses will be tidied during the next maintenance cycle.',
-    );
-  }, []);
-
   const handleShareApp = useCallback(() => {
-    Alert.alert(
-      'Share Coming Soon',
-      'Sharing options will be available in a future update.',
-    );
+    Alert.alert('Share app', 'Tell your friends about this app!');
   }, []);
 
   const handleDirectMessage = useCallback(async () => {
     if (!canSendDirectMessage) {
       Alert.alert(
-        'Number Required',
-        'Include a valid phone number with country code before sending.',
+        'Phone number required',
+        'Please enter a valid phone number with country code.',
       );
       return;
     }
@@ -107,278 +94,156 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     } catch {
       Alert.alert(
         'Unable to open WhatsApp',
-        'Please install or update WhatsApp and try again.',
+        'Please check if WhatsApp is installed.',
       );
     }
   }, [canSendDirectMessage, cleanedPhone, dmMessage]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View
-        style={[
-          styles.header,
-          { backgroundColor: theme.surface, borderBottomColor: theme.border },
-        ]}
-      >
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>
           Settings
         </Text>
         <TouchableOpacity
-          style={styles.closeButton}
+          style={styles.headerIcon}
           onPress={onClose}
-          activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Close settings"
         >
-          <Text style={styles.closeIcon}>✕</Text>
+          <Icon name="close" size={20} color={theme.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={styles.grow}
         behavior={Platform.select({ ios: 'padding', android: undefined })}
       >
         <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
+          style={styles.grow}
+          contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              APPEARANCE
+              Appearance
             </Text>
 
             <TouchableOpacity
-              style={[styles.settingRow, { backgroundColor: theme.surface }]}
-              onPress={handleThemeChange}
+              style={[styles.row, { backgroundColor: theme.surface }]}
+              onPress={cycleThemeMode}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Change theme"
             >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="skin"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
+              <View style={styles.rowLeft}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon name="skin" size={18} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowTitle, { color: theme.text }]}>
                     Theme
                   </Text>
                   <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
                   >
-                    {getThemeLabel()}
+                    {themeLabel}
                   </Text>
                 </View>
               </View>
-              <Switch
-                value={isDark}
-                onValueChange={handleThemeChange}
-                trackColor={{ false: '#D1D5DB', true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              GENERAL
-            </Text>
-
-            <View
-              style={[styles.settingRow, { backgroundColor: theme.surface }]}
-              accessible
-              accessibilityRole="switch"
-              accessibilityLabel="Auto save new statuses"
-              accessibilityState={{ checked: autoSaveEnabled }}
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="save"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Auto-save new statuses
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Save new media as soon as it is detected.
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={autoSaveEnabled}
-                onValueChange={setAutoSaveEnabled}
-                trackColor={{ false: '#D1D5DB', true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View
-              style={[
-                styles.settingRow,
-                styles.settingRowSpaced,
-                { backgroundColor: theme.surface },
-              ]}
-              accessible
-              accessibilityRole="switch"
-              accessibilityLabel="Status reminders"
-              accessibilityState={{ checked: notifyOnNewStatus }}
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="bells"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Status reminders
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Get alerts when friends post a new status.
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={notifyOnNewStatus}
-                onValueChange={setNotifyOnNewStatus}
-                trackColor={{ false: '#D1D5DB', true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              STORAGE & CLEANUP
-            </Text>
-
-            <View
-              style={[styles.settingRow, { backgroundColor: theme.surface }]}
-              accessible
-              accessibilityRole="switch"
-              accessibilityLabel="Auto clean saved statuses"
-              accessibilityState={{ checked: autoCleanEnabled }}
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="delete"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Auto-clean saved media
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Remove items older than 7 days to free space.
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={autoCleanEnabled}
-                onValueChange={setAutoCleanEnabled}
-                trackColor={{ false: '#D1D5DB', true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.secondaryButton, { borderColor: theme.border }]}
-              onPress={handleClearCache}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Manually clear saved statuses"
-            >
-              <Text
-                style={[styles.secondaryButtonText, { color: theme.primary }]}
+              <View
+                style={[
+                  styles.valueChip,
+                  { backgroundColor: theme.surfaceVariant },
+                ]}
               >
-                Clear saved statuses now
-              </Text>
+                <Text style={[styles.valueChipText, { color: theme.primary }]}>
+                  {themeChipText}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              MESSAGING TOOLS
+              Direct Message
             </Text>
 
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
-              <Text style={[styles.cardTitle, { color: theme.text }]}>
-                Direct message
-              </Text>
-              <Text
-                style={[styles.cardSubtitle, { color: theme.textSecondary }]}
-              >
-                Message anyone on WhatsApp without saving their contact.
-              </Text>
-
-              <View style={styles.inputGroup}>
-                <TextInput
+              <View style={styles.cardHeader}>
+                <View
                   style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: theme.surfaceVariant,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
                   ]}
-                  value={dmPhone}
-                  onChangeText={setDmPhone}
-                  placeholder="Country code + number"
-                  placeholderTextColor={theme.textSecondary}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                />
-                <TextInput
-                  style={[
-                    styles.textArea,
-                    {
-                      backgroundColor: theme.surfaceVariant,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                  value={dmMessage}
-                  onChangeText={setDmMessage}
-                  placeholder="Optional message"
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  numberOfLines={3}
-                  returnKeyType="done"
-                />
+                >
+                  <Icon name="message1" size={18} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>
+                    Chat without saving contact
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cardSubtitle,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    Send messages instantly with country code
+                  </Text>
+                </View>
               </View>
-              <Text style={[styles.helperText, { color: theme.textSecondary }]}>
-                Include your country code, for example 919876543210.
-              </Text>
+
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.surfaceVariant,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                value={dmPhone}
+                onChangeText={setDmPhone}
+                placeholder="e.g., 919876543210"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="phone-pad"
+                returnKeyType="next"
+              />
+
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  {
+                    backgroundColor: theme.surfaceVariant,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                value={dmMessage}
+                onChangeText={setDmMessage}
+                placeholder="Optional message..."
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
 
               <TouchableOpacity
-                style={[styles.primaryButton, primaryButtonDynamicStyle]}
+                style={[
+                  styles.primaryButton,
+                  {
+                    backgroundColor: canSendDirectMessage
+                      ? theme.primary
+                      : theme.border,
+                  },
+                ]}
                 onPress={handleDirectMessage}
                 disabled={!canSendDirectMessage}
                 activeOpacity={0.8}
@@ -392,196 +257,69 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              HELP & SUPPORT
+              About
             </Text>
 
             <TouchableOpacity
-              style={[styles.settingRow, { backgroundColor: theme.surface }]}
-              onPress={() =>
-                openExternalLink(
-                  'https://faq.whatsapp.com/',
-                  'Unable to open the WhatsApp help center.',
-                )
-              }
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Open WhatsApp help center"
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="book"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Help center
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Read tips, FAQs, and troubleshooting guides.
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                ›
-              </Text>
-            </TouchableOpacity>
-
-            <View
-              style={[
-                styles.settingRow,
-                styles.settingRowSpaced,
-                { backgroundColor: theme.surface },
-              ]}
-              accessibilityRole="summary"
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="customerservice"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Community tips
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Shortcuts, best practices, and hidden features.
-                  </Text>
-                </View>
-              </View>
-              <Text
-                style={[
-                  styles.badge,
-                  {
-                    backgroundColor: theme.surfaceVariant,
-                    color: theme.textSecondary,
-                  },
-                ]}
-              >
-                Coming soon
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.settingRow,
-                styles.settingRowSpaced,
-                { backgroundColor: theme.surface },
-              ]}
-              onPress={() =>
-                openExternalLink(
-                  Platform.select({
-                    ios: 'mailto:help@statussaver.app',
-                    android: 'mailto:help@statussaver.app',
-                  }) ?? 'mailto:help@statussaver.app',
-                  'Unable to open your email client.',
-                )
-              }
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Contact support"
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="mail"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Contact support
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Email us feedback or report a problem.
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                ›
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.settingRow,
-                styles.settingRowSpaced,
-                { backgroundColor: theme.surface },
-              ]}
-              onPress={() =>
-                openExternalLink(
-                  'https://www.whatsapp.com/legal/privacy-policy',
-                  'Unable to open the privacy policy.',
-                )
-              }
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Open privacy policy"
-            >
-              <View style={styles.settingLeft}>
-                <Icon
-                  name="lock"
-                  size={20}
-                  color={theme.primary}
-                  style={styles.settingIcon}
-                />
-                <View style={styles.settingText}>
-                  <Text style={[styles.settingTitle, { color: theme.text }]}>
-                    Privacy policy
-                  </Text>
-                  <Text
-                    style={[
-                      styles.settingSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    Learn how we keep your media secure and private.
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                ›
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.secondaryButton, { borderColor: theme.border }]}
+              style={[styles.row, { backgroundColor: theme.surface }]}
               onPress={handleShareApp}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Share this app"
             >
-              <Text
-                style={[styles.secondaryButtonText, { color: theme.primary }]}
-              >
-                Share the app
-              </Text>
+              <View style={styles.rowLeft}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon name="sharealt" size={18} color={theme.primary} />
+                </View>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  Share app
+                </Text>
+              </View>
+              <Icon name="right" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.row, { backgroundColor: theme.surface }]}
+              onPress={() =>
+                openExternalLink(
+                  'https://faq.whatsapp.com/',
+                  'Unable to open help center',
+                )
+              }
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Open help"
+            >
+              <View style={styles.rowLeft}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon
+                    name="questioncircleo"
+                    size={18}
+                    color={theme.primary}
+                  />
+                </View>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  Help
+                </Text>
+              </View>
+              <Icon name="right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-              Simple, beautiful, and safe
+              Version 1.0.0
             </Text>
-            <Text style={styles.footerEmoji}>✨</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -590,156 +328,132 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  flex: {
+  screen: {
     flex: 1,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '700',
   },
-  closeButton: {
+  headerIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  closeIcon: {
-    fontSize: 24,
-    color: '#8696A0',
+  grow: {
+    flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 48,
+  content: {
+    paddingBottom: 40,
   },
   section: {
-    marginTop: 24,
+    paddingTop: 32,
     paddingHorizontal: 16,
   },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+    marginLeft: 4,
   },
-  settingRow: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderRadius: 16,
+    marginBottom: 8,
   },
-  settingRowSpaced: {
-    marginTop: 12,
-  },
-  settingLeft: {
+  rowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: 12,
   },
-  settingIcon: {
-    marginRight: 16,
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  settingText: {
-    flex: 1,
-  },
-  settingTitle: {
+  rowTitle: {
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 2,
   },
-  settingSubtitle: {
-    fontSize: 14,
+  rowSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+    opacity: 0.8,
+  },
+  valueChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  valueChipText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   card: {
-    borderRadius: 20,
-    padding: 16,
-    gap: 16,
+    borderRadius: 14,
+    padding: 18,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    marginBottom: 14,
+    gap: 12,
   },
   cardTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
   },
   cardSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 18,
+    opacity: 0.8,
   },
-  inputGroup: {
-    gap: 12,
-  },
-  textInput: {
-    height: 48,
-    borderRadius: 14,
+  input: {
     borderWidth: 1,
-    paddingHorizontal: 14,
-    fontSize: 15,
-  },
-  textArea: {
-    minHeight: 92,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    textAlignVertical: 'top',
+    marginBottom: 12,
   },
-  helperText: {
-    fontSize: 13,
+  textArea: {
+    minHeight: 88,
   },
   primaryButton: {
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: 14,
+    marginTop: 6,
   },
   primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  secondaryButton: {
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  chevron: {
-    fontSize: 24,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#FFFFFF',
   },
   footer: {
     alignItems: 'center',
     paddingVertical: 40,
   },
   footerText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  footerEmoji: {
-    fontSize: 24,
+    fontSize: 12,
     opacity: 0.5,
   },
 });

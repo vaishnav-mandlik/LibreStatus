@@ -27,7 +27,7 @@ import {
 } from 'react-native-safe-area-context';
 import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 type TabType = 'status' | 'saved' | 'settings';
 type MediaType = 'images' | 'videos';
@@ -35,8 +35,6 @@ type MediaType = 'images' | 'videos';
 const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.2;
 const TAB_WIDTH = width / 2;
-const ACTIVE_COLOR = '#00A884';
-const INACTIVE_COLOR = '#8696A0';
 const SLIDE_DURATION = 340;
 
 function App() {
@@ -60,15 +58,24 @@ function AppContent() {
   const isAnimating = useRef(false);
   const insets = useSafeAreaInsets();
   const lastPrimaryTabRef = useRef<TabType>('status');
+  const { theme, isDark } = useTheme();
+  const activeColor = theme.primary;
+  const inactiveColor = theme.textSecondary;
+  const navIdleCircleColor = isDark
+    ? 'rgba(134, 150, 160, 0.12)'
+    : 'rgba(17, 27, 33, 0.06)';
+  const navActiveCircleColor = isDark
+    ? 'rgba(0, 168, 132, 0.2)'
+    : 'rgba(37, 211, 102, 0.2)';
 
   const imagesLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [INACTIVE_COLOR, ACTIVE_COLOR],
+    outputRange: [inactiveColor, activeColor],
   });
 
   const videosLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [ACTIVE_COLOR, INACTIVE_COLOR],
+    outputRange: [activeColor, inactiveColor],
   });
 
   const tabIndicatorTranslate = mediaProgress.interpolate({
@@ -278,13 +285,16 @@ function AppContent() {
   // };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
+      edges={['top']}
+    >
       <StatusBar
-        backgroundColor="#1C2C33"
-        barStyle="light-content"
+        backgroundColor={theme.background}
+        barStyle={isDark ? 'light-content' : 'dark-content'}
         translucent={false}
       />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
         {/* <View style={styles.header}>
           <Text style={styles.headerTitle}>Status Saver Pro</Text>
@@ -313,6 +323,7 @@ function AppContent() {
                   styles.tabIndicator,
                   {
                     width: TAB_WIDTH,
+                    backgroundColor: activeColor,
                     transform: [{ translateX: tabIndicatorTranslate }],
                   },
                 ]}
@@ -324,9 +335,7 @@ function AppContent() {
                 <Icon
                   name="picture"
                   size={18}
-                  color={
-                    activeMedia === 'images' ? ACTIVE_COLOR : INACTIVE_COLOR
-                  }
+                  color={activeMedia === 'images' ? activeColor : inactiveColor}
                   style={styles.tabIcon}
                 />
                 <Animated.Text
@@ -342,9 +351,7 @@ function AppContent() {
                 <Icon
                   name="playcircleo"
                   size={18}
-                  color={
-                    activeMedia === 'videos' ? ACTIVE_COLOR : INACTIVE_COLOR
-                  }
+                  color={activeMedia === 'videos' ? activeColor : inactiveColor}
                   style={styles.tabIcon}
                 />
                 <Animated.Text
@@ -416,19 +423,25 @@ function AppContent() {
             <View
               style={[
                 styles.navIconCircle,
-                activeTab === 'status' && styles.navIconCircleActive,
+                {
+                  backgroundColor:
+                    activeTab === 'status'
+                      ? navActiveCircleColor
+                      : navIdleCircleColor,
+                },
               ]}
             >
               <MaterialIcon
                 name="update"
                 size={22}
-                color={activeTab === 'status' ? '#00A884' : '#8696A0'}
+                color={activeTab === 'status' ? activeColor : inactiveColor}
               />
             </View>
             <Text
               style={[
                 styles.navText,
-                activeTab === 'status' && styles.navTextActive,
+                { color: inactiveColor },
+                activeTab === 'status' && { color: activeColor },
               ]}
             >
               Status
@@ -446,19 +459,25 @@ function AppContent() {
             <View
               style={[
                 styles.navIconCircle,
-                activeTab === 'saved' && styles.navIconCircleActive,
+                {
+                  backgroundColor:
+                    activeTab === 'saved'
+                      ? navActiveCircleColor
+                      : navIdleCircleColor,
+                },
               ]}
             >
               <Icon
                 name="download"
                 size={20}
-                color={activeTab === 'saved' ? '#00A884' : '#8696A0'}
+                color={activeTab === 'saved' ? activeColor : inactiveColor}
               />
             </View>
             <Text
               style={[
                 styles.navText,
-                activeTab === 'saved' && styles.navTextActive,
+                { color: inactiveColor },
+                activeTab === 'saved' && { color: activeColor },
               ]}
             >
               Saved
@@ -476,19 +495,25 @@ function AppContent() {
             <View
               style={[
                 styles.navIconCircle,
-                activeTab === 'settings' && styles.navIconCircleActive,
+                {
+                  backgroundColor:
+                    activeTab === 'settings'
+                      ? navActiveCircleColor
+                      : navIdleCircleColor,
+                },
               ]}
             >
               <Icon
                 name="setting"
                 size={20}
-                color={activeTab === 'settings' ? '#00A884' : '#8696A0'}
+                color={activeTab === 'settings' ? activeColor : inactiveColor}
               />
             </View>
             <Text
               style={[
                 styles.navText,
-                activeTab === 'settings' && styles.navTextActive,
+                { color: inactiveColor },
+                activeTab === 'settings' && { color: activeColor },
               ]}
             >
               Settings
@@ -542,7 +567,6 @@ const styles = StyleSheet.create({
   },
   mediaTabs: {
     flexDirection: 'row',
-    backgroundColor: '#1C2C33',
     position: 'relative',
     overflow: 'hidden',
     elevation: 2,
@@ -565,7 +589,6 @@ const styles = StyleSheet.create({
   mediaTabText: {
     fontSize: 13,
     fontWeight: '700',
-    color: INACTIVE_COLOR,
     letterSpacing: 0.8,
   },
   tabIndicator: {
@@ -574,18 +597,15 @@ const styles = StyleSheet.create({
     left: 0,
     height: 3,
     borderRadius: 3,
-    backgroundColor: ACTIVE_COLOR,
     pointerEvents: 'none',
   },
   content: {
     flex: 1,
-    backgroundColor: '#0D1418',
     position: 'relative',
     overflow: 'hidden',
   },
   contentStandalone: {
     flex: 1,
-    backgroundColor: '#0D1418',
   },
   contentSlider: {
     flexDirection: 'row',
@@ -596,11 +616,9 @@ const styles = StyleSheet.create({
   contentPage: {
     width,
     height: '100%',
-    backgroundColor: '#0D1418',
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#1C2C33',
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -622,15 +640,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
-    backgroundColor: 'rgba(134, 150, 160, 0.12)',
-  },
-  navIconCircleActive: {
-    backgroundColor: 'rgba(0, 168, 132, 0.2)',
   },
   navText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8696A0',
     marginTop: 2,
   },
   navTextActive: {
