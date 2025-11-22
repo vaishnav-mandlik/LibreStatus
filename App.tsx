@@ -3,7 +3,7 @@
  * Beautiful dark UI with swipeable tabs
  */
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   Alert,
   Animated,
@@ -18,33 +18,48 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import Icon from "react-native-vector-icons/AntDesign";
-import MaterialIcon from "react-native-vector-icons/MaterialIcons";
-import StatusListScreen from "./src/screens/StatusListScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
-import { ThemeProvider } from "./src/context/ThemeContext";
+} from 'react-native';
+import Icon from 'react-native-vector-icons/AntDesign';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
+import {
+  SafeAreaProvider,
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import StatusListScreen from './src/screens/StatusListScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import { ThemeProvider } from './src/context/ThemeContext';
 
-type TabType = "status" | "saved";
-type MediaType = "images" | "videos";
+type TabType = 'status' | 'saved';
+type MediaType = 'images' | 'videos';
 
-const { width } = Dimensions.get("window");
+const { width } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.2;
 const TAB_WIDTH = width / 2;
-const ACTIVE_COLOR = "#00A884";
-const INACTIVE_COLOR = "#8696A0";
+const ACTIVE_COLOR = '#00A884';
+const INACTIVE_COLOR = '#8696A0';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabType>("status");
-  const [activeMedia, setActiveMedia] = useState<MediaType>("images");
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  const [activeTab, setActiveTab] = useState<TabType>('status');
+  const [activeMedia, setActiveMedia] = useState<MediaType>('images');
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [reloadTick, setReloadTick] = useState<number>(Date.now());
   const activeMediaRef = useRef<MediaType>(activeMedia);
   const mediaProgress = useRef(
-    new Animated.Value(activeMedia === "images" ? 1 : 0)
+    new Animated.Value(activeMedia === 'images' ? 1 : 0),
   ).current;
   const isAnimating = useRef(false);
+  const insets = useSafeAreaInsets();
 
   const imagesLabelColor = mediaProgress.interpolate({
     inputRange: [0, 1],
@@ -67,7 +82,7 @@ function App() {
         inputRange: [0, 1],
         outputRange: [-width, 0],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
   const imageOpacity = mediaProgress;
@@ -78,7 +93,7 @@ function App() {
         inputRange: [0, 1],
         outputRange: [1, 0],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
   const imageScale = useMemo(
@@ -87,7 +102,7 @@ function App() {
         inputRange: [0, 1],
         outputRange: [0.98, 1],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
   const videoScale = useMemo(
@@ -96,7 +111,7 @@ function App() {
         inputRange: [0, 1],
         outputRange: [1, 0.98],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
   const imageParallax = useMemo(
@@ -105,7 +120,7 @@ function App() {
         inputRange: [0, 1],
         outputRange: [-16, 0],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
   const videoParallax = useMemo(
@@ -114,11 +129,11 @@ function App() {
         inputRange: [0, 1],
         outputRange: [0, 16],
       }),
-    [mediaProgress]
+    [mediaProgress],
   );
 
-  const imagePointerEvents = activeMedia === "images" ? "auto" : "none";
-  const videoPointerEvents = activeMedia === "videos" ? "auto" : "none";
+  const imagePointerEvents = activeMedia === 'images' ? 'auto' : 'none';
+  const videoPointerEvents = activeMedia === 'videos' ? 'auto' : 'none';
 
   useEffect(() => {
     activeMediaRef.current = activeMedia;
@@ -137,12 +152,12 @@ function App() {
     }
 
     // Swipe left when on images (to videos)
-    if (dx < 0 && currentMedia === "images") {
+    if (dx < 0 && currentMedia === 'images') {
       return true;
     }
 
     // Swipe right when on videos (to images)
-    if (dx > 0 && currentMedia === "videos") {
+    if (dx > 0 && currentMedia === 'videos') {
       return true;
     }
 
@@ -161,7 +176,7 @@ function App() {
     setActiveMedia(nextMedia);
 
     Animated.spring(mediaProgress, {
-      toValue: nextMedia === "images" ? 1 : 0,
+      toValue: nextMedia === 'images' ? 1 : 0,
       tension: 180,
       friction: 18,
       useNativeDriver: true,
@@ -192,12 +207,12 @@ function App() {
         const { dx } = gestureState;
         const currentMedia = activeMediaRef.current;
 
-        if (currentMedia === "images" && dx < 0) {
+        if (currentMedia === 'images' && dx < 0) {
           const progress = Math.min(Math.abs(dx) / width, 1);
           mediaProgress.setValue(Math.max(1 - progress, 0));
         }
 
-        if (currentMedia === "videos" && dx > 0) {
+        if (currentMedia === 'videos' && dx > 0) {
           const progress = Math.min(Math.abs(dx) / width, 1);
           mediaProgress.setValue(Math.min(progress, 1));
         }
@@ -211,19 +226,19 @@ function App() {
           Math.abs(dx) > SWIPE_THRESHOLD || Math.abs(vx) > 0.5;
 
         if (shouldSwipe) {
-          if (dx < 0 && currentMedia === "images") {
-            animateMediaChange("videos");
+          if (dx < 0 && currentMedia === 'images') {
+            animateMediaChange('videos');
             return;
           }
 
-          if (dx > 0 && currentMedia === "videos") {
-            animateMediaChange("images");
+          if (dx > 0 && currentMedia === 'videos') {
+            animateMediaChange('images');
             return;
           }
         }
 
         Animated.spring(mediaProgress, {
-          toValue: currentMedia === "images" ? 1 : 0,
+          toValue: currentMedia === 'images' ? 1 : 0,
           tension: 260,
           friction: 20,
           useNativeDriver: true,
@@ -233,25 +248,25 @@ function App() {
         if (isAnimating.current) return;
 
         Animated.spring(mediaProgress, {
-          toValue: activeMediaRef.current === "images" ? 1 : 0,
+          toValue: activeMediaRef.current === 'images' ? 1 : 0,
           tension: 260,
           friction: 20,
           useNativeDriver: true,
         }).start();
       },
-    })
+    }),
   ).current;
 
   // Auto reload when app becomes active (opened or returned to foreground)
   useEffect(() => {
     const handleAppStateChange = (nextState: AppStateStatus) => {
-      if (nextState === "active") {
+      if (nextState === 'active') {
         setReloadTick(Date.now());
       }
     };
     const subscription = AppState.addEventListener(
-      "change",
-      handleAppStateChange
+      'change',
+      handleAppStateChange,
     );
     return () => subscription.remove();
   }, []);
@@ -259,282 +274,281 @@ function App() {
   const openWhatsApp = async () => {
     try {
       // Open WhatsApp home screen. This avoids "Invalid chat link" errors.
-      const appScheme = "whatsapp://app";
+      const appScheme = 'whatsapp://app';
       const canOpenApp = await Linking.canOpenURL(appScheme);
       if (canOpenApp) {
         await Linking.openURL(appScheme);
         return;
       }
       // Fallback: open a compose screen with a blank message (encoded space)
-      const composeScheme = "whatsapp://send?text=%20";
+      const composeScheme = 'whatsapp://send?text=%20';
       const canOpenCompose = await Linking.canOpenURL(composeScheme);
       if (canOpenCompose) {
         await Linking.openURL(composeScheme);
         return;
       }
-      const playStoreUrl = "market://details?id=com.whatsapp";
+      const playStoreUrl = 'market://details?id=com.whatsapp';
       const canOpenStore = await Linking.canOpenURL(playStoreUrl);
       if (canOpenStore) {
         await Linking.openURL(playStoreUrl);
         return;
       }
-      Alert.alert("WhatsApp not found", "Please install WhatsApp to continue.");
+      Alert.alert('WhatsApp not found', 'Please install WhatsApp to continue.');
     } catch {
-      Alert.alert("Error", "Unable to open WhatsApp.");
+      Alert.alert('Error', 'Unable to open WhatsApp.');
     }
   };
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <SafeAreaView
-          style={{ flex: 1, backgroundColor: "#1C2C33" }}
-          edges={["top"]}
-        >
-          <StatusBar backgroundColor="#1C2C33" barStyle="light-content" />
-          <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>Status Saver Pro</Text>
-              <View style={styles.headerIcons}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={openWhatsApp}
-                >
-                  <Icon name="phone" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton}>
-                  <Icon name="pushpin" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => setIsSettingsVisible(true)}
-                >
-                  <Icon name="setting" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Media Tabs */}
-            <View style={styles.mediaTabs}>
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.tabIndicator,
-                  {
-                    width: TAB_WIDTH,
-                    transform: [{ translateX: tabIndicatorTranslate }],
-                  },
-                ]}
-              />
-              <TouchableOpacity
-                style={styles.mediaTab}
-                onPress={() => handleMediaTabPress("images")}
-              >
-                <Icon
-                  name="picture"
-                  size={18}
-                  color={
-                    activeMedia === "images" ? ACTIVE_COLOR : INACTIVE_COLOR
-                  }
-                  style={styles.tabIcon}
-                />
-                <Animated.Text
-                  style={[styles.mediaTabText, { color: imagesLabelColor }]}
-                >
-                  IMAGES
-                </Animated.Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mediaTab}
-                onPress={() => handleMediaTabPress("videos")}
-              >
-                <Icon
-                  name="playcircleo"
-                  size={18}
-                  color={
-                    activeMedia === "videos" ? ACTIVE_COLOR : INACTIVE_COLOR
-                  }
-                  style={styles.tabIcon}
-                />
-                <Animated.Text
-                  style={[styles.mediaTabText, { color: videosLabelColor }]}
-                >
-                  VIDEOS
-                </Animated.Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Content with Smooth Swipe Gesture */}
-            <View style={styles.content} {...panResponder.panHandlers}>
-              <Animated.View
-                style={[
-                  styles.contentSlider,
-                  { transform: [{ translateX: contentTranslateX }] },
-                ]}
-              >
-                <Animated.View
-                  pointerEvents={imagePointerEvents}
-                  style={[
-                    styles.contentPage,
-                    {
-                      opacity: imageOpacity,
-                      transform: [
-                        { scale: imageScale },
-                        { translateX: imageParallax },
-                      ],
-                    },
-                  ]}
-                >
-                  <StatusListScreen
-                    type="whatsapp"
-                    mediaFilter="images"
-                    activeTab={activeTab}
-                    reloadSignal={reloadTick}
-                  />
-                </Animated.View>
-                <Animated.View
-                  pointerEvents={videoPointerEvents}
-                  style={[
-                    styles.contentPage,
-                    {
-                      opacity: videoOpacity,
-                      transform: [
-                        { scale: videoScale },
-                        { translateX: videoParallax },
-                      ],
-                    },
-                  ]}
-                >
-                  <StatusListScreen
-                    type="whatsapp"
-                    mediaFilter="videos"
-                    activeTab={activeTab}
-                    reloadSignal={reloadTick}
-                  />
-                </Animated.View>
-              </Animated.View>
-            </View>
-
-            {/* Bottom Navigation */}
-            <View style={styles.bottomNav}>
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  activeTab === "status" && styles.navButtonActive,
-                ]}
-                onPress={() => setActiveTab("status")}
-              >
-                <View
-                  style={[
-                    styles.navIconCircle,
-                    activeTab === "status" && styles.navIconCircleActive,
-                  ]}
-                >
-                  <MaterialIcon
-                    name="update"
-                    size={22}
-                    color={activeTab === "status" ? "#00A884" : "#8696A0"}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    activeTab === "status" && styles.navTextActive,
-                  ]}
-                >
-                  Status
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.navButton,
-                  activeTab === "saved" && styles.navButtonActive,
-                ]}
-                onPress={() => setActiveTab("saved")}
-              >
-                <View
-                  style={[
-                    styles.navIconCircle,
-                    activeTab === "saved" && styles.navIconCircleActive,
-                  ]}
-                >
-                  <Icon
-                    name="download"
-                    size={20}
-                    color={activeTab === "saved" ? "#00A884" : "#8696A0"}
-                  />
-                </View>
-                <Text
-                  style={[
-                    styles.navText,
-                    activeTab === "saved" && styles.navTextActive,
-                  ]}
-                >
-                  Saved
-                </Text>
-              </TouchableOpacity>
-            </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <StatusBar
+        backgroundColor="#1C2C33"
+        barStyle="light-content"
+        translucent={false}
+      />
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Status Saver Pro</Text>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity style={styles.iconButton} onPress={openWhatsApp}>
+              <Icon name="phone" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton}>
+              <Icon name="pushpin" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setIsSettingsVisible(true)}
+            >
+              <Icon name="setting" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Settings Modal */}
-          <Modal
-            visible={isSettingsVisible}
-            animationType="slide"
-            onRequestClose={() => setIsSettingsVisible(false)}
-            presentationStyle="fullScreen"
+        {/* Media Tabs */}
+        <View style={styles.mediaTabs}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.tabIndicator,
+              {
+                width: TAB_WIDTH,
+                transform: [{ translateX: tabIndicatorTranslate }],
+              },
+            ]}
+          />
+          <TouchableOpacity
+            style={styles.mediaTab}
+            onPress={() => handleMediaTabPress('images')}
           >
-            <SettingsScreen onClose={() => setIsSettingsVisible(false)} />
-          </Modal>
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </ThemeProvider>
+            <Icon
+              name="picture"
+              size={18}
+              color={activeMedia === 'images' ? ACTIVE_COLOR : INACTIVE_COLOR}
+              style={styles.tabIcon}
+            />
+            <Animated.Text
+              style={[styles.mediaTabText, { color: imagesLabelColor }]}
+            >
+              IMAGES
+            </Animated.Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.mediaTab}
+            onPress={() => handleMediaTabPress('videos')}
+          >
+            <Icon
+              name="playcircleo"
+              size={18}
+              color={activeMedia === 'videos' ? ACTIVE_COLOR : INACTIVE_COLOR}
+              style={styles.tabIcon}
+            />
+            <Animated.Text
+              style={[styles.mediaTabText, { color: videosLabelColor }]}
+            >
+              VIDEOS
+            </Animated.Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Content with Smooth Swipe Gesture */}
+        <View style={styles.content} {...panResponder.panHandlers}>
+          <Animated.View
+            style={[
+              styles.contentSlider,
+              { transform: [{ translateX: contentTranslateX }] },
+            ]}
+          >
+            <Animated.View
+              pointerEvents={imagePointerEvents}
+              style={[
+                styles.contentPage,
+                {
+                  opacity: imageOpacity,
+                  transform: [
+                    { scale: imageScale },
+                    { translateX: imageParallax },
+                  ],
+                },
+              ]}
+            >
+              <StatusListScreen
+                type="whatsapp"
+                mediaFilter="images"
+                activeTab={activeTab}
+                reloadSignal={reloadTick}
+              />
+            </Animated.View>
+            <Animated.View
+              pointerEvents={videoPointerEvents}
+              style={[
+                styles.contentPage,
+                {
+                  opacity: videoOpacity,
+                  transform: [
+                    { scale: videoScale },
+                    { translateX: videoParallax },
+                  ],
+                },
+              ]}
+            >
+              <StatusListScreen
+                type="whatsapp"
+                mediaFilter="videos"
+                activeTab={activeTab}
+                reloadSignal={reloadTick}
+              />
+            </Animated.View>
+          </Animated.View>
+        </View>
+
+        {/* Bottom Navigation */}
+        <View
+          style={[
+            styles.bottomNav,
+            { paddingBottom: Math.max(insets.bottom, 16) },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.navButton,
+              activeTab === 'status' && styles.navButtonActive,
+            ]}
+            onPress={() => setActiveTab('status')}
+          >
+            <View
+              style={[
+                styles.navIconCircle,
+                activeTab === 'status' && styles.navIconCircleActive,
+              ]}
+            >
+              <MaterialIcon
+                name="update"
+                size={22}
+                color={activeTab === 'status' ? '#00A884' : '#8696A0'}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navText,
+                activeTab === 'status' && styles.navTextActive,
+              ]}
+            >
+              Status
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.navButton,
+              activeTab === 'saved' && styles.navButtonActive,
+            ]}
+            onPress={() => setActiveTab('saved')}
+          >
+            <View
+              style={[
+                styles.navIconCircle,
+                activeTab === 'saved' && styles.navIconCircleActive,
+              ]}
+            >
+              <Icon
+                name="download"
+                size={20}
+                color={activeTab === 'saved' ? '#00A884' : '#8696A0'}
+              />
+            </View>
+            <Text
+              style={[
+                styles.navText,
+                activeTab === 'saved' && styles.navTextActive,
+              ]}
+            >
+              Saved
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Settings Modal */}
+      <Modal
+        visible={isSettingsVisible}
+        animationType="slide"
+        onRequestClose={() => setIsSettingsVisible(false)}
+        presentationStyle="fullScreen"
+      >
+        <SettingsScreen onClose={() => setIsSettingsVisible(false)} />
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#1C2C33',
+  },
   container: {
     flex: 1,
-    backgroundColor: "#1C2C33",
+    backgroundColor: '#1C2C33',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: "#1C2C33",
+    backgroundColor: '#1C2C33',
     elevation: 4,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontWeight: '400',
+    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
   headerIcons: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
   },
   iconButton: {
     width: 40,
     height: 40,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   mediaTabs: {
-    flexDirection: "row",
-    backgroundColor: "#1C2C33",
-    position: "relative",
-    overflow: "hidden",
+    flexDirection: 'row',
+    backgroundColor: '#1C2C33',
+    position: 'relative',
+    overflow: 'hidden',
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -542,9 +556,9 @@ const styles = StyleSheet.create({
   mediaTab: {
     flex: 1,
     paddingVertical: 14,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: 8,
   },
   tabIcon: {
@@ -552,51 +566,51 @@ const styles = StyleSheet.create({
   },
   mediaTabText: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: '700',
     color: INACTIVE_COLOR,
     letterSpacing: 0.8,
   },
   tabIndicator: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     height: 3,
     borderRadius: 3,
     backgroundColor: ACTIVE_COLOR,
-    pointerEvents: "none",
+    pointerEvents: 'none',
   },
   content: {
     flex: 1,
-    backgroundColor: "#0D1418",
-    position: "relative",
-    overflow: "hidden",
+    backgroundColor: '#0D1418',
+    position: 'relative',
+    overflow: 'hidden',
   },
   contentSlider: {
-    flexDirection: "row",
+    flexDirection: 'row',
     flex: 1,
     width: width * 2,
-    height: "100%",
+    height: '100%',
   },
   contentPage: {
     width,
-    height: "100%",
-    backgroundColor: "#0D1418",
+    height: '100%',
+    backgroundColor: '#0D1418',
   },
   bottomNav: {
-    flexDirection: "row",
-    backgroundColor: "#1C2C33",
+    flexDirection: 'row',
+    backgroundColor: '#1C2C33',
     paddingVertical: 10,
     paddingHorizontal: 16,
     paddingBottom: 16,
     elevation: 8,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   navButton: {
     flex: 1,
-    alignItems: "center",
+    alignItems: 'center',
     paddingVertical: 6,
   },
   navButtonActive: {},
@@ -604,21 +618,21 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 4,
   },
   navIconCircleActive: {
-    backgroundColor: "rgba(0, 168, 132, 0.15)",
+    backgroundColor: 'rgba(0, 168, 132, 0.15)',
   },
   navText: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#8696A0",
+    fontWeight: '600',
+    color: '#8696A0',
     marginTop: 2,
   },
   navTextActive: {
-    color: "#00A884",
+    color: '#00A884',
   },
 });
 
