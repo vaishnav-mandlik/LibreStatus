@@ -294,6 +294,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => setSelectedStatus(item)}
+          style={styles.cardPressable}
         >
           <Image source={{ uri: item.uri }} style={styles.cardImage} />
           {item.type === 'video' && (
@@ -303,36 +304,42 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
               </View>
             </View>
           )}
-        </TouchableOpacity>
-        <LinearGradient
-          colors={['transparent', 'rgba(0, 0, 0, 0.35)', 'rgba(0, 0, 0, 0.7)']}
-          style={styles.overlayGradient}
-          pointerEvents="box-none"
-        >
-          <View style={styles.overlayContent}>
-            <Text style={styles.overlayText}>{formatTime(item.timestamp)}</Text>
-            <TouchableOpacity
-              style={styles.overlayButton}
-              onPress={() => handleSave(item)}
-              disabled={savingId === item.id || item.isSaved}
-              hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-              accessibilityRole="button"
-            >
-              <View
-                style={[
-                  styles.overlayIcon,
-                  getOverlayIconColors(item.isSaved ?? false, theme.primary),
-                ]}
+          <LinearGradient
+            colors={[
+              'transparent',
+              'rgba(0, 0, 0, 0.35)',
+              'rgba(0, 0, 0, 0.7)',
+            ]}
+            style={styles.overlayGradient}
+            pointerEvents="box-none"
+          >
+            <View style={styles.overlayContent} pointerEvents="box-none">
+              <Text style={styles.overlayText}>
+                {formatTime(item.timestamp)}
+              </Text>
+              <TouchableOpacity
+                style={styles.overlayButton}
+                onPress={() => handleSave(item)}
+                disabled={savingId === item.id || item.isSaved}
+                hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+                accessibilityRole="button"
               >
-                {item.isSaved ? (
-                  <Icon name="check" size={18} color="#FFFFFF" />
-                ) : (
-                  <Icon name="download" size={16} color="#FFFFFF" />
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+                <View
+                  style={[
+                    styles.overlayIcon,
+                    getOverlayIconColors(item.isSaved ?? false, theme.primary),
+                  ]}
+                >
+                  {item.isSaved ? (
+                    <Icon name="check" size={18} color="#FFFFFF" />
+                  ) : (
+                    <Icon name="download" size={16} color="#FFFFFF" />
+                  )}
+                </View>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
     ),
     [savingId, theme],
@@ -417,6 +424,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: CARD_WIDTH,
     position: 'relative',
+  },
+  cardPressable: {
+    flex: 1,
   },
   cardImage: {
     width: CARD_WIDTH,
