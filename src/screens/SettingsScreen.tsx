@@ -12,7 +12,9 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
+import * as RNLocalize from 'react-native-localize';
 import { useTheme } from '../context/ThemeContext';
+import { getDefaultDialCode } from '../utils/countryDialCodes';
 
 interface SettingsScreenProps {
   onClose: () => void;
@@ -20,11 +22,23 @@ interface SettingsScreenProps {
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
   const { theme, themeMode, setThemeMode } = useTheme();
+  const [countryCode, setCountryCode] = useState(() =>
+    getDefaultDialCode(RNLocalize.getCountry()),
+  );
   const [dmPhone, setDmPhone] = useState('');
   const [dmMessage, setDmMessage] = useState('');
 
-  const cleanedPhone = useMemo(() => dmPhone.replace(/[^\d]/g, ''), [dmPhone]);
-  const canSendDirectMessage = cleanedPhone.length >= 8;
+  const sanitizedCountryCode = useMemo(
+    () => countryCode.replace(/[^\d]/g, ''),
+    [countryCode],
+  );
+  const cleanedNumber = useMemo(() => dmPhone.replace(/[^\d]/g, ''), [dmPhone]);
+  const fullPhoneNumber = useMemo(
+    () => sanitizedCountryCode + cleanedNumber,
+    [sanitizedCountryCode, cleanedNumber],
+  );
+  const canSendDirectMessage =
+    sanitizedCountryCode.length >= 1 && cleanedNumber.length >= 6;
 
   const cycleThemeMode = useCallback(() => {
     if (themeMode === 'light') {
@@ -70,19 +84,29 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     Alert.alert('Share app', 'Tell your friends about this app!');
   }, []);
 
+  const handleCountryCodeChange = useCallback((value: string) => {
+    const digitsOnly = value.replace(/[^\d]/g, '');
+    setCountryCode(digitsOnly ? `+${digitsOnly}` : '+');
+  }, []);
+
+  const handlePhoneNumberChange = useCallback((value: string) => {
+    const digitsOnly = value.replace(/[^\d]/g, '');
+    setDmPhone(digitsOnly);
+  }, []);
+
   const handleDirectMessage = useCallback(async () => {
     if (!canSendDirectMessage) {
       Alert.alert(
         'Phone number required',
-        'Please enter a valid phone number with country code.',
+        'Please enter a valid country code and phone number.',
       );
       return;
     }
 
     const message = dmMessage.trim();
     const encodedMessage = encodeURIComponent(message);
-    const nativeUrl = `whatsapp://send?phone=${cleanedPhone}&text=${encodedMessage}`;
-    const webUrl = `https://wa.me/${cleanedPhone}?text=${encodedMessage}`;
+    const nativeUrl = `whatsapp://send?phone=${fullPhoneNumber}&text=${encodedMessage}`;
+    const webUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
 
     try {
       const supported = await Linking.canOpenURL(nativeUrl);
@@ -97,14 +121,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         'Please check if WhatsApp is installed.',
       );
     }
-  }, [canSendDirectMessage, cleanedPhone, dmMessage]);
+  }, [canSendDirectMessage, dmMessage, fullPhoneNumber]);
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          Settings
-        </Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
         <TouchableOpacity
           style={styles.headerIcon}
           onPress={onClose}
@@ -125,9 +147,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              Appearance
-            </Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Appearance</Text>
 
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
@@ -145,10 +165,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 >
                   <Icon name="skin" size={18} color={theme.primary} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.rowTitle, { color: theme.text }]}>
-                    Theme
-                  </Text>
+                <View style={styles.flexOne}>
+                  <Text style={[styles.rowTitle, { color: theme.text }]}>Theme</Text>
                   <Text
                     style={[styles.rowSubtitle, { color: theme.textSecondary }]}
                   >
@@ -157,10 +175,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 </View>
               </View>
               <View
-                style={[
-                  styles.valueChip,
-                  { backgroundColor: theme.surfaceVariant },
-                ]}
+                style={[styles.valueChip, { backgroundColor: theme.surfaceVariant }]}
               >
                 <Text style={[styles.valueChipText, { color: theme.primary }]}>
                   {themeChipText}
@@ -170,9 +185,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              Direct Message
-            </Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Direct Message</Text>
 
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
               <View style={styles.cardHeader}>
@@ -184,37 +197,57 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 >
                   <Icon name="message1" size={18} color={theme.primary} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    Chat without saving contact
-                  </Text>
+                <View style={styles.flexOne}>
+                  <Text style={[styles.cardTitle, { color: theme.text }]}>Chat without saving contact</Text>
                   <Text
-                    style={[
-                      styles.cardSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
+                    style={[styles.cardSubtitle, { color: theme.textSecondary }]}
                   >
-                    Send messages instantly with country code
+                    Send messages instantly. Country code is auto-detected—adjust if needed.
                   </Text>
                 </View>
               </View>
 
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.surfaceVariant,
-                    color: theme.text,
-                    borderColor: theme.border,
-                  },
-                ]}
-                value={dmPhone}
-                onChangeText={setDmPhone}
-                placeholder="e.g., 919876543210"
-                placeholderTextColor={theme.textSecondary}
-                keyboardType="phone-pad"
-                returnKeyType="next"
-              />
+              <View style={styles.phoneRow}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.countryInput,
+                    {
+                      backgroundColor: theme.surfaceVariant,
+                      color: theme.text,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  value={countryCode}
+                  onChangeText={handleCountryCodeChange}
+                  placeholder="+1"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="phone-pad"
+                  returnKeyType="next"
+                  maxLength={6}
+                  accessibilityLabel="Country dial code"
+                />
+
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.subscriberInput,
+                    {
+                      backgroundColor: theme.surfaceVariant,
+                      color: theme.text,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  value={dmPhone}
+                  onChangeText={handlePhoneNumberChange}
+                  placeholder="9876543210"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="phone-pad"
+                  returnKeyType="next"
+                  maxLength={15}
+                  accessibilityLabel="Phone number"
+                />
+              </View>
 
               <TextInput
                 style={[
@@ -256,9 +289,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              About
-            </Text>
+            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>About</Text>
 
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
@@ -276,9 +307,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 >
                   <Icon name="sharealt" size={18} color={theme.primary} />
                 </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  Share app
-                </Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>Share app</Text>
               </View>
               <Icon name="right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
@@ -302,24 +331,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                     { backgroundColor: theme.surfaceVariant },
                   ]}
                 >
-                  <Icon
-                    name="questioncircleo"
-                    size={18}
-                    color={theme.primary}
-                  />
+                  <Icon name="questioncircleo" size={18} color={theme.primary} />
                 </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  Help
-                </Text>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>Help</Text>
               </View>
               <Icon name="right" size={16} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-              Version 1.0.0
-            </Text>
+            <Text style={[styles.footerText, { color: theme.textSecondary }]}>Version 1.0.0</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -425,6 +446,11 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     opacity: 0.8,
   },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   input: {
     borderWidth: 1,
     borderRadius: 12,
@@ -432,6 +458,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     marginBottom: 12,
+  },
+  countryInput: {
+    width: 100,
+    marginRight: 12,
+    marginBottom: 0,
+    textAlign: 'center',
+  },
+  subscriberInput: {
+    flex: 1,
+    marginBottom: 0,
   },
   textArea: {
     minHeight: 88,
@@ -455,6 +491,9 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     opacity: 0.5,
+  },
+  flexOne: {
+    flex: 1,
   },
 });
 
