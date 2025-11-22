@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import * as RNLocalize from 'react-native-localize';
 import { useTheme } from '../context/ThemeContext';
 import { getDefaultDialCode } from '../utils/countryDialCodes';
@@ -169,10 +170,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              {t('settings.appearance')}
-            </Text>
-
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
               onPress={cycleThemeMode}
@@ -214,10 +211,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              {t('settings.languageTitle')}
-            </Text>
-
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
               <View style={styles.cardHeader}>
                 <View
@@ -229,9 +222,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Icon name="earth" size={18} color={theme.primary} />
                 </View>
                 <View style={styles.flexOne}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    {t('settings.languageTitle')}
-                  </Text>
                   <Text
                     style={[
                       styles.cardSubtitle,
@@ -271,10 +261,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              {t('settings.directMessageTitle')}
-            </Text>
-
             <View style={[styles.card, { backgroundColor: theme.surface }]}>
               <View style={styles.cardHeader}>
                 <View
@@ -286,9 +272,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                   <Icon name="message1" size={18} color={theme.primary} />
                 </View>
                 <View style={styles.flexOne}>
-                  <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    {t('settings.directMessageCardTitle')}
-                  </Text>
                   <Text
                     style={[
                       styles.cardSubtitle,
@@ -376,18 +359,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !canSendDirectMessage }}
               >
-                <Text style={styles.primaryButtonText}>
-                  {t('settings.directMessageButton')}
-                </Text>
+                <View style={styles.primaryButtonContent}>
+                  <Text style={styles.primaryButtonText}>
+                    {t('settings.directMessageButton')}
+                  </Text>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-              {t('settings.aboutTitle')}
-            </Text>
-
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
               onPress={handleShareApp}
@@ -532,7 +513,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   section: {
-    paddingTop: 32,
+    paddingTop: 16,
     paddingHorizontal: 16,
   },
   sectionTitle: {
@@ -633,6 +614,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     marginTop: 6,
+  },
+  primaryButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonIcon: {
+    marginLeft: 8,
   },
   primaryButtonText: {
     fontSize: 15,
