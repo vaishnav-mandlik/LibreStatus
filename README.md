@@ -1,4 +1,156 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# WhatsApp Status Downloader
+
+A beautiful and fully-functional WhatsApp Status Downloader for Android built with React Native.
+
+## Features ✨
+
+- 📥 **Download Status** - Save images and videos from WhatsApp and WhatsApp Business statuses
+- 🎨 **Beautiful UI** - Modern gradient design with smooth animations
+- 📱 **Dual Support** - Works with both WhatsApp and WhatsApp Business
+- 🎬 **Video Support** - Built-in video player with playback controls
+- 🔄 **Pull to Refresh** - Easy refresh to see new statuses
+- 💾 **Gallery Integration** - Saved statuses are directly saved to your device gallery
+- 📤 **Share Feature** - Share statuses with friends
+- 🔒 **Privacy Focused** - All operations are local, no data uploaded to servers
+
+## Screenshots
+
+The app features:
+
+- A modern gradient header with purple/blue theme
+- Grid layout displaying status thumbnails
+- Video indicators for video statuses
+- Download buttons on each status card
+- Full-screen viewer for images and videos
+- Tab navigation between WhatsApp, WhatsApp Business, and About screens
+
+## Requirements
+
+- React Native 0.82.1
+- Android 7.0 (API 24) or higher
+- Node.js 20+
+- WhatsApp installed on device
+
+## Installation
+
+1. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Run on Android**
+   ```bash
+   npm run android
+   ```
+
+## How to Use
+
+1. **Grant Permissions**: On first launch, the app will request storage permissions. Grant them to access statuses.
+
+2. **View Statuses**: Open WhatsApp and view someone's status first. Then open this app to see available statuses.
+
+3. **Download**:
+
+   - Tap any status to view it in full screen
+   - Tap the download button (⬇) to save to gallery
+   - Saved statuses are marked with a green checkmark
+
+4. **Switch Apps**: Use the bottom tabs to switch between WhatsApp and WhatsApp Business statuses.
+
+## How It Works
+
+The app scans the following directories for WhatsApp statuses:
+
+**WhatsApp:**
+
+- `/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/.Statuses`
+- `/storage/emulated/0/WhatsApp/Media/.Statuses`
+
+**WhatsApp Business:**
+
+- `/storage/emulated/0/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/.Statuses`
+- `/storage/emulated/0/WhatsApp Business/Media/.Statuses`
+
+## Permissions Required
+
+- `READ_EXTERNAL_STORAGE` - To read WhatsApp status files (Android 10-12)
+- `WRITE_EXTERNAL_STORAGE` - To save statuses to gallery (Android 9 and below)
+- `READ_MEDIA_IMAGES` - To read image statuses (Android 13+)
+- `READ_MEDIA_VIDEO` - To read video statuses (Android 13+)
+
+## Tech Stack
+
+- **React Native 0.82.1** - Cross-platform framework
+- **TypeScript** - Type-safe development
+- **React Navigation** - Navigation and routing
+- **react-native-fs** - File system operations
+- **react-native-permissions** - Permission handling
+- **react-native-linear-gradient** - Beautiful gradient effects
+- **react-native-video** - Video playback
+- **@react-native-camera-roll/camera-roll** - Gallery integration
+
+## Project Structure
+
+```
+whatsappstatus/
+├── src/
+│   ├── components/
+│   │   ├── StatusCard.tsx        # Status thumbnail card
+│   │   ├── StatusViewer.tsx      # Full-screen status viewer
+│   │   └── EmptyState.tsx        # Empty state component
+│   ├── screens/
+│   │   ├── StatusListScreen.tsx  # Main status list screen
+│   │   └── AboutScreen.tsx       # About/Help screen
+│   ├── utils/
+│   │   ├── permissions.ts        # Permission handling
+│   │   └── statusManager.ts      # Status file operations
+│   └── types/
+│       └── index.ts              # TypeScript types
+└── App.tsx                       # Main app component
+```
+
+## Troubleshooting
+
+### No statuses showing
+
+1. Make sure WhatsApp is installed
+2. View someone's status in WhatsApp first
+3. Grant all requested permissions
+4. Pull down to refresh the list
+
+### Permission denied
+
+Go to Settings → Apps → WhatsApp Status Downloader → Permissions and enable Storage permissions.
+
+### Saved status not in gallery
+
+Check your gallery app's "Download" or "WhatsApp Status" folder.
+
+## Building for Release
+
+```bash
+cd android
+./gradlew assembleRelease
+```
+
+The APK will be at: `android/app/build/outputs/apk/release/app-release.apk`
+
+## Privacy
+
+This app:
+
+- ✅ Operates entirely locally on your device
+- ✅ Does not collect any personal data
+- ✅ Does not upload any data to external servers
+
+## Legal Disclaimer
+
+This app is not affiliated with WhatsApp Inc. Users are responsible for respecting others' privacy when downloading statuses.
+
+---
+
+Made with ❤️ for WhatsApp users
 
 # Getting Started
 

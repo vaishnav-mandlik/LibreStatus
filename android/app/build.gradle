@@ -2,6 +2,12 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+project.ext.vectoricons = [
+    iconFontNames: [ 'MaterialIcons.ttf', 'MaterialCommunityIcons.ttf', 'AntDesign.ttf', 'FontAwesome.ttf' ]
+]
+
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -77,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.whatsapp"
+    namespace "com.vaishnavmandlik.statussaverpro"
     defaultConfig {
-        applicationId "com.whatsapp"
+        applicationId "com.vaishnavmandlik.statussaverpro"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -110,6 +116,9 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // DocumentFile for SAF
+    implementation "androidx.documentfile:documentfile:1.0.1"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
