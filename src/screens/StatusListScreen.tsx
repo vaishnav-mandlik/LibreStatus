@@ -77,7 +77,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     savedStatusesRef.current = savedStatuses;
   }, [savedStatuses]);
 
-  // Load saved statuses from AsyncStorage
   const loadSavedStatuses = useCallback(async () => {
     try {
       const savedData = await AsyncStorage.getItem('savedStatuses');
@@ -92,7 +91,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     }
   }, [savedCacheKey]);
 
-  // Save savedStatuses to AsyncStorage whenever it changes
   useEffect(() => {
     if (savedStatuses.length > 0) {
       AsyncStorage.setItem('savedStatuses', JSON.stringify(savedStatuses))
@@ -105,7 +103,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     }
   }, [savedStatuses]);
 
-  // Load saved statuses on mount
   useEffect(() => {
     loadSavedStatuses();
   }, [loadSavedStatuses]);
@@ -135,7 +132,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
         let files: StatusFile[] = [];
 
-        // For Android 11+, use SAF folder picker
         if (Platform.OS === 'android' && Platform.Version >= 30) {
           const safUri = await hasFolderAccess(type);
 
@@ -189,7 +185,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           files = await getStatusFiles(type);
           console.log(`📊 Loaded ${files.length} status files`);
         } else {
-          // For Android 10 and below, use legacy permissions
           const hasPermission = await checkStoragePermission();
 
           if (!hasPermission) {
@@ -256,7 +251,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     }
   };
 
-  // Filter statuses based on mediaFilter prop and activeTab (memoized)
   const filteredStatuses = useMemo(() => {
     const sourceStatuses = activeTab === 'saved' ? savedStatuses : statuses;
     return sourceStatuses.filter(status => {
@@ -466,7 +460,6 @@ const styles = StyleSheet.create({
 });
 
 export default React.memo(StatusListScreen, (prevProps, nextProps) => {
-  // Only re-render if these specific props change
   return (
     prevProps.mediaFilter === nextProps.mediaFilter &&
     prevProps.activeTab === nextProps.activeTab &&

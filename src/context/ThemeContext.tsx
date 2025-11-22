@@ -29,21 +29,21 @@ interface Theme {
 }
 
 const lightTheme: Theme = {
-  background: '#F0F2F5',
+  background: '#F7F8FA',
   surface: '#FFFFFF',
-  surfaceVariant: '#F7F8FA',
-  primary: '#25D366',
-  primaryDark: '#1DA851',
-  text: '#111B21',
-  textSecondary: '#667781',
-  border: '#E9EDEF',
-  success: '#25D366',
+  surfaceVariant: '#E8F6EF',
+  primary: '#17C066',
+  primaryDark: '#129854',
+  text: '#1A1A1A',
+  textSecondary: '#6F6F6F',
+  border: '#E5E5E5',
+  success: '#17C066',
   error: '#DC2626',
   warning: '#F59E0B',
   card: '#FFFFFF',
-  shadow: 'rgba(0, 0, 0, 0.08)',
-  modalBackground: 'rgba(17, 27, 33, 0.9)',
-  overlay: 'rgba(0, 0, 0, 0.4)',
+  shadow: 'rgba(17, 32, 23, 0.08)',
+  modalBackground: 'rgba(26, 26, 26, 0.9)',
+  overlay: 'rgba(26, 26, 26, 0.35)',
 };
 
 const darkTheme: Theme = {
