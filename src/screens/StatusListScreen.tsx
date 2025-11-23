@@ -16,13 +16,16 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { StatusFile } from '../types';
 import StatusViewer from '../components/StatusViewer';
-import { getStatusFiles, saveStatusToGallery } from '../utils/statusManager';
+import {
+  getStatusFiles,
+  saveStatusToGallery,
+  getSavedStatusFiles,
+} from '../utils/statusManager';
 import {
   requestStoragePermission,
   checkStoragePermission,
@@ -96,31 +99,28 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     savedStatusesRef.current = savedStatuses;
   }, [savedStatuses]);
 
-  const loadSavedStatuses = useCallback(async () => {
-    try {
-      const savedData = await AsyncStorage.getItem('savedStatuses');
-      if (savedData) {
-        const saved = JSON.parse(savedData);
+  const loadSavedStatuses = useCallback(
+    async (force = false) => {
+      if (!force) {
+        const cached = savedCache.get(savedCacheKey);
+        if (cached && cached.length > 0) {
+          setSavedStatuses(cached);
+          return;
+        }
+      }
+
+      try {
+        console.log('📱 Loading saved statuses from gallery...');
+        const saved = await getSavedStatusFiles();
         setSavedStatuses(saved);
         savedCache.set(savedCacheKey, saved);
-        console.log(`✅ Loaded ${saved.length} saved statuses from storage`);
+        console.log(`✅ Loaded ${saved.length} saved statuses from gallery`);
+      } catch (error) {
+        console.error('❌ Error loading saved statuses:', error);
       }
-    } catch (error) {
-      console.error('❌ Error loading saved statuses:', error);
-    }
-  }, [savedCacheKey]);
-
-  useEffect(() => {
-    if (savedStatuses.length > 0) {
-      AsyncStorage.setItem('savedStatuses', JSON.stringify(savedStatuses))
-        .then(() =>
-          console.log(`💾 Persisted ${savedStatuses.length} saved statuses`),
-        )
-        .catch(err =>
-          console.error('❌ Error persisting saved statuses:', err),
-        );
-    }
-  }, [savedStatuses]);
+    },
+    [savedCacheKey],
+  );
 
   useEffect(() => {
     loadSavedStatuses();
@@ -254,8 +254,12 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   }, [loadStatuses, reloadSignal]);
 
   const handleRefresh = useCallback(() => {
-    loadStatuses(true);
-  }, [loadStatuses]);
+    if (activeTab === 'saved') {
+      loadSavedStatuses(true);
+    } else {
+      loadStatuses(true);
+    }
+  }, [loadStatuses, loadSavedStatuses, activeTab]);
 
   const handleSave = useCallback(
     async (status: StatusFile) => {
@@ -272,13 +276,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           setStatuses(prev =>
             prev.map(s => (s.id === status.id ? savedStatus : s)),
           );
-          setSavedStatuses(prev => {
-            const exists = prev.find(s => s.id === status.id);
-            if (!exists) {
-              return [savedStatus, ...prev];
-            }
-            return prev;
-          });
+          // Reload saved statuses from gallery to sync
+          await loadSavedStatuses(true);
         } else {
           showMessage({
             title: 'Failed to save',
@@ -297,7 +296,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setSavingId(null);
       }
     },
-    [showMessage],
+    [showMessage, loadSavedStatuses],
   );
 
   const filteredStatuses = useMemo(() => {

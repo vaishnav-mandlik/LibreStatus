@@ -216,7 +216,7 @@ export const saveStatusToGallery = async (
     // If it's a content URI (from SAF), we need to copy it to a temp location first
     if (statusFile.uri.startsWith('content://')) {
       console.log('📋 Detected content URI, copying to temp location...');
-      
+
       const tempDir = `${RNFS.CachesDirectoryPath}/statuses`;
       const tempFilePath = `${tempDir}/${statusFile.filename}`;
 
@@ -232,7 +232,7 @@ export const saveStatusToGallery = async (
         const fileContent = await RNFS.readFile(statusFile.uri, 'base64');
         // Write to temp location
         await RNFS.writeFile(tempFilePath, fileContent, 'base64');
-        
+
         uriToSave = 'file://' + tempFilePath;
         console.log(`✅ Copied to temp: ${tempFilePath}`);
       } catch (copyError) {
@@ -264,6 +264,48 @@ export const saveStatusToGallery = async (
   } catch (error) {
     console.error('❌ Error saving to gallery:', error);
     return false;
+  }
+};
+
+/**
+ * Get saved status files from the device gallery's Status album
+ */
+export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
+  try {
+    console.log('📱 Loading saved statuses from gallery...');
+
+    const photos = await CameraRoll.getPhotos({
+      first: 1000,
+      assetType: 'All',
+      groupName: 'Status',
+      include: ['filename', 'fileSize', 'imageSize'],
+    });
+
+    console.log(`📊 Found ${photos.edges.length} saved files in Status album`);
+
+    const statusFiles: StatusFile[] = photos.edges.map((edge, index) => {
+      const node = edge.node;
+      const uri = node.image.uri;
+      const filename = node.image.filename || `status_${index}`;
+      const isVideo =
+        node.type === 'video' || filename.toLowerCase().endsWith('.mp4');
+
+      return {
+        id: uri,
+        uri: uri,
+        filename: filename,
+        type: isVideo ? 'video' : 'image',
+        timestamp: node.timestamp ? node.timestamp * 1000 : Date.now(),
+        size: node.image.fileSize || 0,
+        isSaved: true,
+      };
+    });
+
+    // Sort by timestamp, newest first
+    return statusFiles.sort((a, b) => b.timestamp - a.timestamp);
+  } catch (error) {
+    console.error('❌ Error loading saved statuses from gallery:', error);
+    return [];
   }
 };
 
