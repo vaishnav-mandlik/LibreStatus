@@ -316,9 +316,6 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
               </View>
             </TouchableOpacity>
             <View style={styles.metaInfo}>
-              <Text style={styles.filename} numberOfLines={1}>
-                {status.filename}
-              </Text>
               <View style={styles.metaRow}>
                 {metaInfo.date ? (
                   <View style={styles.metaPill}>
