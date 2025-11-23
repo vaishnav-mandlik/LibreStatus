@@ -25,7 +25,7 @@ import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIc
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import type { OnLoadData, OnProgressData } from 'react-native-video';
 import type { StatusFile } from '../types';
-import { useFeedback } from '../context/FeedbackContext';
+import { useFeedback, FeedbackProvider } from '../context/FeedbackContext';
 
 const formatPlaybackTime = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -91,13 +91,45 @@ interface StatusViewerProps {
   visible: boolean;
   status: StatusFile | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   isSaving?: boolean;
 }
 
 const StatusViewer: React.FC<StatusViewerProps> = ({
   visible,
   status,
+  onClose,
+  onSave,
+  isSaving,
+}) => {
+  if (!status) {
+    return null;
+  }
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+    >
+      <FeedbackProvider>
+        <StatusViewerContent
+          status={status}
+          visible={visible}
+          onClose={onClose}
+          onSave={onSave}
+          isSaving={isSaving}
+        />
+      </FeedbackProvider>
+    </Modal>
+  );
+};
+
+const StatusViewerContent: React.FC<StatusViewerProps> = ({
+  status,
+  visible,
   onClose,
   onSave,
   isSaving,
@@ -109,6 +141,13 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
+
+  // Track if this status is saved locally for immediate UI feedback
+  const [localIsSaved, setLocalIsSaved] = useState(false);
+
+  useEffect(() => {
+    setLocalIsSaved(status?.isSaved ?? false);
+  }, [status]);
 
   useEffect(() => {
     StatusBar.setHidden(visible, 'fade');
@@ -123,6 +162,7 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
       setDuration(0);
       setCurrentTime(0);
       setIsBuffering(false);
+      setLocalIsSaved(false);
       return;
     }
 
@@ -130,7 +170,15 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
     setDuration(0);
     setCurrentTime(0);
     setIsBuffering(false);
+    setLocalIsSaved(status.isSaved ?? false);
   }, [status]);
+
+  const handleSaveClick = useCallback(async () => {
+    if (!localIsSaved && !isSaving) {
+      setLocalIsSaved(true);
+      await onSave();
+    }
+  }, [localIsSaved, isSaving, onSave]);
 
   const playbackProgress = useMemo(() => {
     if (duration <= 0) {
@@ -251,195 +299,188 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        <View style={styles.mediaContainer}>
-          {status.type === 'image' ? (
-            <Image
-              source={{ uri: status.uri }}
-              style={styles.media}
-              resizeMode="contain"
-            />
-          ) : (
-            <Video
-              ref={videoRef}
-              key={status.uri}
-              source={{ uri: status.uri }}
-              style={styles.media}
-              resizeMode="contain"
-              paused={!isPlaying}
-              repeat={false}
-              controls={false}
-              playInBackground={false}
-              playWhenInactive={false}
-              onLoadStart={() => setIsBuffering(true)}
-              onLoad={handleVideoLoad}
-              onProgress={handleVideoProgress}
-              onEnd={handleVideoEnd}
-              onBuffer={({ isBuffering: buffering }) =>
-                setIsBuffering(buffering)
-              }
-            />
-          )}
-          {status.type === 'video' && isBuffering && (
-            <ActivityIndicator
-              style={styles.bufferingIndicator}
-              size="large"
-              color="#FFFFFF"
-            />
-          )}
-          {status.type === 'video' && !isPlaying && !isBuffering && (
-            <TouchableOpacity
-              style={styles.centerPlayButton}
-              onPress={handleTogglePlayback}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcon name="play" size={36} color="#000000" />
-            </TouchableOpacity>
-          )}
-        </View>
+    <View style={styles.container}>
+      <View style={styles.mediaContainer}>
+        {status.type === 'image' ? (
+          <Image
+            source={{ uri: status.uri }}
+            style={styles.media}
+            resizeMode="contain"
+          />
+        ) : (
+          <Video
+            ref={videoRef}
+            key={status.uri}
+            source={{ uri: status.uri }}
+            style={styles.media}
+            resizeMode="contain"
+            paused={!isPlaying}
+            repeat={false}
+            controls={false}
+            playInBackground={false}
+            playWhenInactive={false}
+            onLoadStart={() => setIsBuffering(true)}
+            onLoad={handleVideoLoad}
+            onProgress={handleVideoProgress}
+            onEnd={handleVideoEnd}
+            onBuffer={({ isBuffering: buffering }) => setIsBuffering(buffering)}
+          />
+        )}
+        {status.type === 'video' && isBuffering && (
+          <ActivityIndicator
+            style={styles.bufferingIndicator}
+            size="large"
+            color="#FFFFFF"
+          />
+        )}
+        {status.type === 'video' && !isPlaying && !isBuffering && (
+          <TouchableOpacity
+            style={styles.centerPlayButton}
+            onPress={handleTogglePlayback}
+            activeOpacity={0.8}
+          >
+            <MaterialCommunityIcon name="play" size={36} color="#000000" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-        <LinearGradient
-          colors={['rgba(0,0,0,0.75)', 'rgba(0,0,0,0)']}
-          style={styles.topBar}
-          pointerEvents="box-none"
-        >
-          <View style={styles.topContent}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <View style={styles.closeButtonInner}>
-                <MaterialCommunityIcon name="close" size={20} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
-            <View style={styles.metaInfo}>
-              <View style={styles.metaRow}>
-                {metaInfo.date ? (
-                  <View style={styles.metaPill}>
-                    <MaterialCommunityIcon
-                      name="clock-outline"
-                      size={13}
-                      color="rgba(255, 255, 255, 0.9)"
-                    />
-                    <Text style={styles.metaPillText} numberOfLines={1}>
-                      {metaInfo.date}
-                    </Text>
-                  </View>
-                ) : null}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.75)', 'rgba(0,0,0,0)']}
+        style={styles.topBar}
+        pointerEvents="box-none"
+      >
+        <View style={styles.topContent}>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <View style={styles.closeButtonInner}>
+              <MaterialCommunityIcon name="close" size={20} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.metaInfo}>
+            <View style={styles.metaRow}>
+              {metaInfo.date ? (
                 <View style={styles.metaPill}>
                   <MaterialCommunityIcon
-                    name="file-outline"
+                    name="clock-outline"
                     size={13}
                     color="rgba(255, 255, 255, 0.9)"
                   />
-                  <Text style={styles.metaPillText}>{metaInfo.size}</Text>
+                  <Text style={styles.metaPillText} numberOfLines={1}>
+                    {metaInfo.date}
+                  </Text>
                 </View>
+              ) : null}
+              <View style={styles.metaPill}>
+                <MaterialCommunityIcon
+                  name="file-outline"
+                  size={13}
+                  color="rgba(255, 255, 255, 0.9)"
+                />
+                <Text style={styles.metaPillText}>{metaInfo.size}</Text>
               </View>
             </View>
           </View>
-        </LinearGradient>
+        </View>
+      </LinearGradient>
 
-        {status.type === 'video' && (
-          <LinearGradient
-            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
-            style={styles.videoControlsBar}
-            pointerEvents="box-none"
-          >
-            <TouchableOpacity
-              onPress={handleTogglePlayback}
-              style={styles.videoToggle}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcon
-                name={isPlaying ? 'pause' : 'play'}
-                size={20}
-                color="#FFFFFF"
-              />
-            </TouchableOpacity>
-            <View style={styles.progressSection}>
-              <Pressable
-                onPress={handleProgressPress}
-                onLongPress={handleProgressPress}
-                onPressIn={handleProgressPress}
-                onLayout={handleProgressLayout}
-                style={styles.progressTouch}
-              >
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${Math.round(playbackProgress * 100)}%` },
-                    ]}
-                  />
-                </View>
-              </Pressable>
-              <View style={styles.timeRow}>
-                <Text style={styles.timeLabel}>
-                  {formatPlaybackTime(currentTime)}
-                </Text>
-                <Text style={styles.timeLabel}>
-                  {formatPlaybackTime(duration)}
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
-        )}
-
-        <View style={styles.bottomTray} pointerEvents="box-none">
+      {status.type === 'video' && (
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
+          style={styles.videoControlsBar}
+          pointerEvents="box-none"
+        >
           <TouchableOpacity
-            style={[
-              styles.actionBubble,
-              isSaving && styles.actionBubbleDisabled,
-            ]}
-            onPress={onSave}
-            disabled={isSaving}
-            activeOpacity={0.8}
-          >
-            {isSaving ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <MaterialCommunityIcon
-                name="tray-arrow-down"
-                size={22}
-                color="#FFFFFF"
-              />
-            )}
-            <Text style={styles.actionBubbleLabel} numberOfLines={1}>
-              {isSaving ? 'Saving…' : 'Download'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionBubble}
-            onPress={handleShare}
+            onPress={handleTogglePlayback}
+            style={styles.videoToggle}
             activeOpacity={0.8}
           >
             <MaterialCommunityIcon
-              name="share-variant"
+              name={isPlaying ? 'pause' : 'play'}
+              size={20}
+              color="#FFFFFF"
+            />
+          </TouchableOpacity>
+          <View style={styles.progressSection}>
+            <Pressable
+              onPress={handleProgressPress}
+              onLongPress={handleProgressPress}
+              onPressIn={handleProgressPress}
+              onLayout={handleProgressLayout}
+              style={styles.progressTouch}
+            >
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${Math.round(playbackProgress * 100)}%` },
+                  ]}
+                />
+              </View>
+            </Pressable>
+            <View style={styles.timeRow}>
+              <Text style={styles.timeLabel}>
+                {formatPlaybackTime(currentTime)}
+              </Text>
+              <Text style={styles.timeLabel}>
+                {formatPlaybackTime(duration)}
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+      )}
+
+      <View style={styles.bottomTray} pointerEvents="box-none">
+        <TouchableOpacity
+          style={[
+            styles.actionBubble,
+            (isSaving || localIsSaved) && styles.actionBubbleDisabled,
+          ]}
+          onPress={handleSaveClick}
+          disabled={isSaving || localIsSaved}
+          activeOpacity={0.8}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : localIsSaved ? (
+            <MaterialCommunityIcon name="check" size={22} color="#FFFFFF" />
+          ) : (
+            <MaterialCommunityIcon
+              name="tray-arrow-down"
               size={22}
               color="#FFFFFF"
             />
-            <Text style={styles.actionBubbleLabel} numberOfLines={1}>
-              Share
-            </Text>
-          </TouchableOpacity>
+          )}
+          <Text style={styles.actionBubbleLabel} numberOfLines={1}>
+            {isSaving ? 'Saving…' : localIsSaved ? 'Saved' : 'Download'}
+          </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.primaryBubble}
-            onPress={handleRepost}
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcon name="whatsapp" size={22} color="#0B4D2B" />
-            <Text style={styles.primaryBubbleLabel} numberOfLines={1}>
-              Repost
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.actionBubble}
+          onPress={handleShare}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcon
+            name="share-variant"
+            size={22}
+            color="#FFFFFF"
+          />
+          <Text style={styles.actionBubbleLabel} numberOfLines={1}>
+            Share
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.primaryBubble}
+          onPress={handleRepost}
+          activeOpacity={0.85}
+        >
+          <MaterialCommunityIcon name="whatsapp" size={22} color="#0B4D2B" />
+          <Text style={styles.primaryBubbleLabel} numberOfLines={1}>
+            Repost
+          </Text>
+        </TouchableOpacity>
       </View>
-    </Modal>
+    </View>
   );
 };
 

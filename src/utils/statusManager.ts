@@ -3,6 +3,9 @@ import { Platform } from 'react-native';
 import { StatusFile, StatusFolder } from '../types';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import { hasFolderAccess, listFolderFiles } from './folderPicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SAVED_STATUS_IDS_KEY = '@saved_status_ids';
 
 const WHATSAPP_STATUS_PATHS = [
   // Legacy paths (Android 10 and below) - More accessible
@@ -204,6 +207,85 @@ export const getStatusFiles = async (
   }
 };
 
+/**
+ * Get saved status IDs from AsyncStorage
+ */
+export const getSavedStatusIds = async (): Promise<string[]> => {
+  try {
+    const saved = await AsyncStorage.getItem(SAVED_STATUS_IDS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error('Error loading saved status IDs:', error);
+    return [];
+  }
+};
+
+/**
+ * Sync saved status IDs with actual gallery files
+ * Removes IDs for files that no longer exist in gallery
+ */
+export const syncSavedStatusIds = async (): Promise<string[]> => {
+  try {
+    const savedIds = await getSavedStatusIds();
+    const galleryFiles = await getSavedStatusFiles();
+    const galleryFileIds = new Set(galleryFiles.map(f => f.id));
+
+    // Filter out IDs that don't exist in gallery anymore
+    const validIds = savedIds.filter(id => {
+      // Check if this ID exists in gallery files
+      // The ID might be the filename or URI, so check both
+      return galleryFiles.some(
+        file => file.id === id || file.filename === id || file.uri.includes(id),
+      );
+    });
+
+    // Update AsyncStorage with synced IDs
+    if (validIds.length !== savedIds.length) {
+      await AsyncStorage.setItem(
+        SAVED_STATUS_IDS_KEY,
+        JSON.stringify(validIds),
+      );
+      console.log(`Synced saved IDs: ${savedIds.length} -> ${validIds.length}`);
+    }
+
+    return validIds;
+  } catch (error) {
+    console.error('Error syncing saved status IDs:', error);
+    return await getSavedStatusIds();
+  }
+};
+
+/**
+ * Add a status ID to saved list
+ */
+export const addSavedStatusId = async (statusId: string): Promise<void> => {
+  try {
+    const savedIds = await getSavedStatusIds();
+    if (!savedIds.includes(statusId)) {
+      savedIds.push(statusId);
+      await AsyncStorage.setItem(
+        SAVED_STATUS_IDS_KEY,
+        JSON.stringify(savedIds),
+      );
+    }
+  } catch (error) {
+    console.error('Error saving status ID:', error);
+  }
+};
+
+/**
+ * Remove a status ID from saved list
+ */
+export const removeSavedStatusId = async (statusId: string): Promise<void> => {
+  try {
+    const savedIds = await getSavedStatusIds();
+    const filtered = savedIds.filter(id => id !== statusId);
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    console.error('Error removing status ID:', error);
+  }
+};
+
 export const saveStatusToGallery = async (
   statusFile: StatusFile,
 ): Promise<boolean> => {
@@ -247,6 +329,9 @@ export const saveStatusToGallery = async (
       type: statusFile.type === 'video' ? 'video' : 'photo',
       album: 'Status',
     });
+
+    // Mark as saved in persistent storage
+    await addSavedStatusId(statusFile.id);
 
     // Clean up temp file if we created one
     if (uriToSave !== statusFile.uri && uriToSave.startsWith('file://')) {

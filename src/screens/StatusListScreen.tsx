@@ -25,6 +25,7 @@ import {
   getStatusFiles,
   saveStatusToGallery,
   getSavedStatusFiles,
+  syncSavedStatusIds,
 } from '../utils/statusManager';
 import {
   requestStoragePermission,
@@ -81,17 +82,22 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const [savedStatuses, setSavedStatuses] = useState<StatusFile[]>(
     () => savedCache.get(savedCacheKey) ?? [],
   );
-  const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [savedLoading, setSavedLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFile | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const savedStatusesRef = useRef<StatusFile[]>(savedStatuses);
+  const savedIdsRef = useRef<Set<string>>(new Set());
   const hasCompletedInitialLoad = useRef(false);
+  const isRefreshing = useRef(false);
+  const statusLoadingRef = useRef(false);
+  const savedLoadingRef = useRef(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const markSavedStatuses = useCallback((files: StatusFile[]) => {
-    const savedIds = savedStatusesRef.current.map(s => s.id);
     return files.map(file => ({
       ...file,
-      isSaved: savedIds.includes(file.id),
+      isSaved: savedIdsRef.current.has(file.id),
     }));
   }, []);
 
@@ -101,6 +107,10 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const loadSavedStatuses = useCallback(
     async (force = false) => {
+      if (!force && savedLoadingRef.current) {
+        return;
+      }
+
       if (!force) {
         const cached = savedCache.get(savedCacheKey);
         if (cached && cached.length > 0) {
@@ -110,6 +120,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       }
 
       try {
+        savedLoadingRef.current = true;
+        setSavedLoading(true);
         console.log('📱 Loading saved statuses from gallery...');
         const saved = await getSavedStatusFiles();
         setSavedStatuses(saved);
@@ -117,10 +129,55 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         console.log(`✅ Loaded ${saved.length} saved statuses from gallery`);
       } catch (error) {
         console.error('❌ Error loading saved statuses:', error);
+      } finally {
+        savedLoadingRef.current = false;
+        setSavedLoading(false);
       }
     },
     [savedCacheKey],
   );
+
+  // Load and sync saved status IDs on mount
+  useEffect(() => {
+    const loadSavedIds = async () => {
+      const savedIds = await syncSavedStatusIds();
+      savedIdsRef.current = new Set(savedIds);
+      console.log(`Loaded ${savedIds.length} saved status IDs from storage`);
+      // Update statuses with synced saved state
+      if (statuses.length > 0) {
+        const updated = markSavedStatuses(statuses);
+        setStatuses(updated);
+        statusCache.set(cacheKey, updated);
+      }
+    };
+    loadSavedIds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync saved IDs when switching tabs or refreshing
+  useEffect(() => {
+    if (activeTab === 'status') {
+      const syncIds = async () => {
+        const savedIds = await syncSavedStatusIds();
+        savedIdsRef.current = new Set(savedIds);
+        if (statuses.length > 0) {
+          const updated = markSavedStatuses(statuses);
+          setStatuses(updated);
+          statusCache.set(cacheKey, updated);
+        }
+      };
+      syncIds();
+    } else if (activeTab === 'saved') {
+      // Sync saved files when switching to saved tab
+      const syncSaved = async () => {
+        const savedIds = await syncSavedStatusIds();
+        savedIdsRef.current = new Set(savedIds);
+        await loadSavedStatuses(true);
+      };
+      syncSaved();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, reloadSignal]);
 
   useEffect(() => {
     loadSavedStatuses();
@@ -136,6 +193,10 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const loadStatuses = useCallback(
     async (force = false) => {
+      if (!force && statusLoadingRef.current) {
+        return;
+      }
+
       if (!force) {
         const cached = statusCache.get(cacheKey);
         if (cached && cached.length > 0) {
@@ -147,7 +208,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       }
 
       try {
-        setLoading(true);
+        statusLoadingRef.current = true;
+        setStatusLoading(true);
 
         let files: StatusFile[] = [];
 
@@ -155,9 +217,11 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           const safUri = await hasFolderAccess(type);
 
           if (!safUri) {
-            setLoading(false);
+            statusLoadingRef.current = false;
+            setStatusLoading(false);
             const openPicker = () => {
-              setLoading(true);
+              statusLoadingRef.current = true;
+              setStatusLoading(true);
               (async () => {
                 const uri = await requestFolderAccess(type);
                 if (uri) {
@@ -167,10 +231,12 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
                   setStatuses(filesWithSavedState);
                   statusCache.set(cacheKey, filesWithSavedState);
                 }
-                setLoading(false);
+                statusLoadingRef.current = false;
+                setStatusLoading(false);
               })().catch(error => {
                 console.error('❌ Error requesting folder access:', error);
-                setLoading(false);
+                statusLoadingRef.current = false;
+                setStatusLoading(false);
                 showMessage({
                   title: 'Something went wrong',
                   message: 'Unable to open folder picker. Please try again.',
@@ -200,7 +266,10 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
                 {
                   label: 'Cancel',
                   variant: 'secondary',
-                  onPress: () => setLoading(false),
+                  onPress: () => {
+                    statusLoadingRef.current = false;
+                    setStatusLoading(false);
+                  },
                 },
                 {
                   label: 'Open Picker',
@@ -220,7 +289,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           if (!hasPermission) {
             const granted = await requestStoragePermission();
             if (!granted) {
-              setLoading(false);
+              statusLoadingRef.current = false;
+              setStatusLoading(false);
               return;
             }
           }
@@ -241,7 +311,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           type: 'error',
         });
       } finally {
-        setLoading(false);
+        statusLoadingRef.current = false;
+        setStatusLoading(false);
       }
     },
     [cacheKey, markSavedStatuses, showMessage, type],
@@ -253,11 +324,28 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     loadStatuses(force);
   }, [loadStatuses, reloadSignal]);
 
-  const handleRefresh = useCallback(() => {
-    if (activeTab === 'saved') {
-      loadSavedStatuses(true);
-    } else {
-      loadStatuses(true);
+  const handleRefresh = useCallback(async () => {
+    // Prevent multiple simultaneous refresh operations
+    if (isRefreshing.current) {
+      return;
+    }
+
+    isRefreshing.current = true;
+    setRefreshing(true);
+
+    try {
+      // Sync saved IDs with gallery to remove deleted files
+      const savedIds = await syncSavedStatusIds();
+      savedIdsRef.current = new Set(savedIds);
+
+      if (activeTab === 'saved') {
+        await loadSavedStatuses(true);
+      } else {
+        await loadStatuses(true);
+      }
+    } finally {
+      isRefreshing.current = false;
+      setRefreshing(false);
     }
   }, [loadStatuses, loadSavedStatuses, activeTab]);
 
@@ -267,15 +355,26 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       try {
         const success = await saveStatusToGallery(status);
         if (success) {
+          // Sync saved IDs from AsyncStorage immediately
+          const savedIds = await syncSavedStatusIds();
+          savedIdsRef.current = new Set(savedIds);
+
+          // Update status with saved flag immediately
+          const savedStatus = { ...status, isSaved: true };
+          setStatuses(prev => {
+            const updated = prev.map(s =>
+              s.id === status.id ? savedStatus : s,
+            );
+            statusCache.set(cacheKey, updated);
+            return updated;
+          });
+
           showMessage({
             title: 'Saved to gallery',
             message: 'Status is now available in your downloads.',
             type: 'success',
           });
-          const savedStatus = { ...status, isSaved: true };
-          setStatuses(prev =>
-            prev.map(s => (s.id === status.id ? savedStatus : s)),
-          );
+
           // Reload saved statuses from gallery to sync
           await loadSavedStatuses(true);
         } else {
@@ -296,7 +395,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setSavingId(null);
       }
     },
-    [showMessage, loadSavedStatuses],
+    [showMessage, loadSavedStatuses, cacheKey],
   );
 
   const filteredStatuses = useMemo(() => {
@@ -307,6 +406,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         : status.type === 'video';
     });
   }, [activeTab, savedStatuses, statuses, mediaFilter]);
+
+  const listLoading = activeTab === 'saved' ? savedLoading : statusLoading;
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -375,7 +476,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     [handleSave, savingId, theme],
   );
 
-  if (filteredStatuses.length === 0 && !loading) {
+  if (filteredStatuses.length === 0 && !listLoading && !refreshing) {
     return (
       <View
         style={[styles.emptyContainer, { backgroundColor: theme.background }]}
@@ -418,7 +519,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         })}
         refreshControl={
           <RefreshControl
-            refreshing={loading}
+            refreshing={refreshing}
             onRefresh={handleRefresh}
             colors={[theme.primary]}
             tintColor={theme.primary}
@@ -430,7 +531,11 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         visible={selectedStatus !== null}
         status={selectedStatus}
         onClose={() => setSelectedStatus(null)}
-        onSave={() => selectedStatus && handleSave(selectedStatus)}
+        onSave={async () => {
+          if (selectedStatus) {
+            await handleSave(selectedStatus);
+          }
+        }}
         isSaving={savingId === selectedStatus?.id}
       />
     </View>

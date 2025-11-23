@@ -50,7 +50,7 @@ interface FeedbackContextValue {
   dismissMessage: (id: number) => void;
 }
 
-const DEFAULT_DURATION = 3600;
+const DEFAULT_DURATION = 2000;
 
 const FeedbackContext = createContext<FeedbackContextValue | undefined>(
   undefined,
@@ -96,8 +96,8 @@ export const FeedbackProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }),
     );
 
-    setMessages(prev => [
-      ...prev,
+    // Only show one toast at a time - replace previous toasts
+    setMessages([
       {
         id,
         type,
@@ -362,21 +362,30 @@ const styles = StyleSheet.create({
     bottom: 32,
     alignItems: 'center',
     pointerEvents: 'box-none',
+    zIndex: 99999,
+    elevation: 99999,
   },
   toast: {
     width: '100%',
     paddingHorizontal: 20,
+    zIndex: 99999,
+    elevation: 99999,
   },
   toastCard: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 20, 26, 0.92)',
+    backgroundColor: 'rgba(15, 20, 26, 0.95)',
     borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 99999,
   },
   iconBadge: {
     width: 36,
