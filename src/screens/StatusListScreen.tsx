@@ -293,7 +293,14 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setStatusLoading(false);
       }
     },
-    [cacheKey, markSavedStatuses, mediaFilter, showMessage, showPermissionGuide, type],
+    [
+      cacheKey,
+      markSavedStatuses,
+      mediaFilter,
+      showMessage,
+      showPermissionGuide,
+      type,
+    ],
   );
 
   useEffect(() => {

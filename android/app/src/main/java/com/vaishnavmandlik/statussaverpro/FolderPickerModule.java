@@ -72,12 +72,12 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
                 | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
                 | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
 
-        // Try to open at the WhatsApp status folder directly
+        // Open at the media folder level instead of .Statuses
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
-                // Construct URI for the .Statuses folder
-                // Format: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2F.Statuses
-                String path = "primary:Android/media/" + packageName + "/WhatsApp/Media/.Statuses";
+                // Construct URI for the media folder (not .Statuses)
+                // Format: content://com.android.externalstorage.documents/tree/primary%3AAndroid%2Fmedia
+                String path = "primary:Android/media";
                 Uri initialUri = DocumentsContract.buildDocumentUri(
                     "com.android.externalstorage.documents",
                     path
@@ -109,7 +109,17 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
             }
 
             WritableArray filesArray = Arguments.createArray();
-            DocumentFile[] files = pickedDir.listFiles();
+            
+            // Navigate to the .Statuses folder within the granted media directory
+            // Granted URI might be for media folder, need to find WhatsApp/.../Statuses
+            DocumentFile statusFolder = findStatusFolder(pickedDir);
+            
+            if (statusFolder == null || !statusFolder.exists()) {
+                promise.reject("ERROR", "Status folder not found. Please grant access to the media folder.");
+                return;
+            }
+
+            DocumentFile[] files = statusFolder.listFiles();
 
             for (DocumentFile file : files) {
                 if (file.isFile()) {
@@ -136,5 +146,43 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             promise.reject("ERROR", "Failed to list files: " + e.getMessage());
         }
+    }
+
+    private DocumentFile findStatusFolder(DocumentFile mediaDir) {
+        try {
+            // Try to find WhatsApp or WhatsApp Business folder
+            DocumentFile[] mediaDirs = mediaDir.listFiles();
+            
+            for (DocumentFile dir : mediaDirs) {
+                if (dir.isDirectory()) {
+                    String name = dir.getName();
+                    // Look for com.whatsapp or com.whatsapp.w4b folders
+                    if (name != null && (name.equals("com.whatsapp") || name.equals("com.whatsapp.w4b"))) {
+                        // Navigate to WhatsApp/Media/.Statuses
+                        DocumentFile whatsappDir = dir.findFile("WhatsApp");
+                        if (whatsappDir != null && whatsappDir.isDirectory()) {
+                            DocumentFile mediaFolder = whatsappDir.findFile("Media");
+                            if (mediaFolder != null && mediaFolder.isDirectory()) {
+                                DocumentFile statusFolder = mediaFolder.findFile(".Statuses");
+                                if (statusFolder != null && statusFolder.isDirectory()) {
+                                    return statusFolder;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If not found in expected location, check if the granted folder itself is already the status folder
+            String dirName = mediaDir.getName();
+            if (dirName != null && dirName.equals(".Statuses")) {
+                return mediaDir;
+            }
+            
+        } catch (Exception e) {
+            android.util.Log.e("FolderPicker", "Error finding status folder: " + e.getMessage());
+        }
+        
+        return null;
     }
 }
