@@ -12,7 +12,7 @@ const AboutScreen: React.FC = () => {
         end={{ x: 1, y: 1 }}
       >
         <Text style={styles.headerIcon}>📱</Text>
-        <Text style={styles.headerTitle}>WhatsApp Status Downloader</Text>
+        <Text style={styles.headerTitle}>Status Downloader</Text>
         <Text style={styles.version}>Version 1.0.0</Text>
       </LinearGradient>
 
@@ -20,19 +20,18 @@ const AboutScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>✨ Features</Text>
           <Text style={styles.sectionText}>
-            • View all WhatsApp and WhatsApp Business statuses{'\n'}• Download
-            images and videos to your gallery{'\n'}• Beautiful and intuitive
-            user interface{'\n'}• Share statuses with friends{'\n'}• Automatic
-            status detection
+            • View all available statuses{'\n'}• Download images and videos to
+            your gallery{'\n'}• Beautiful and intuitive user interface{'\n'}•
+            Share statuses with friends{'\n'}• Automatic status detection
           </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📖 How to Use</Text>
           <Text style={styles.sectionText}>
-            1. Make sure WhatsApp is installed on your device{'\n'}
+            1. Make sure the app is installed on your device{'\n'}
             2. Grant storage permissions when prompted{'\n'}
-            3. View someone's status in WhatsApp first{'\n'}
+            3. View someone's status first{'\n'}
             4. Open this app to see all available statuses{'\n'}
             5. Tap any status to view it in full screen{'\n'}
             6. Tap the download button to save it to your gallery
@@ -43,9 +42,9 @@ const AboutScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>⚠️ Important Notes</Text>
           <Text style={styles.sectionText}>
             • This app only shows statuses that are currently available on your
-            device{'\n'}• Statuses disappear after 24 hours (WhatsApp's policy)
-            {'\n'}• You must view a status in WhatsApp first for it to appear
-            here{'\n'}• Storage permission is required for the app to function
+            device{'\n'}• Statuses disappear after 24 hours
+            {'\n'}• You must view a status first for it to appear here{'\n'}•
+            Storage permission is required for the app to function
             {'\n'}• Respect others' privacy when downloading statuses
           </Text>
         </View>
@@ -64,16 +63,13 @@ const AboutScreen: React.FC = () => {
           <Text style={styles.sectionText}>
             • Pull down to refresh the status list{'\n'}• Saved statuses are
             marked with a green checkmark{'\n'}• Use the tabs to switch between
-            WhatsApp and WhatsApp Business{'\n'}• Videos can be played directly
-            in the viewer
+            different sources{'\n'}• Videos can be played directly in the viewer
           </Text>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Made with ❤️ for WhatsApp users</Text>
-          <Text style={styles.disclaimer}>
-            This app is not affiliated with WhatsApp Inc.
-          </Text>
+          <Text style={styles.footerText}>Made with ❤️ for users</Text>
+          <Text style={styles.disclaimer}>This is an independent app.</Text>
         </View>
       </View>
     </ScrollView>

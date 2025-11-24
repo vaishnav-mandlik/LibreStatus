@@ -182,12 +182,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertMessage':
       'Please enter a valid country code and phone number.',
     'settings.directMessageWhatsappError':
-      'Please check if WhatsApp is installed.',
+      'Please check if the app is installed.',
     'settings.aboutTitle': 'About',
     'settings.aboutShare': 'Share app',
     'settings.aboutHelp': 'Help',
     'settings.shareAppAlertTitle': 'Share app',
-    'settings.shareAppAlertMessage': 'Tell your friends about this app!',
+    'settings.shareAppAlertMessage': 'Check out this amazing Status Saver app!',
     'settings.versionLabel': 'Version 1.0.0',
     'settings.languageModalTitle': 'Choose a language',
     'settings.accessibility.close': 'Close settings',
@@ -216,9 +216,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'No images found',
     'status.emptyVideos': 'No videos found',
     'status.emptyImagesSubtitle':
-      "Pull down to refresh or view someone's status on WhatsApp",
+      "Pull down to refresh or view someone's status",
     'status.emptyVideosSubtitle':
-      "Pull down to refresh or view someone's status on WhatsApp",
+      "Pull down to refresh or view someone's status",
     'status.emptySavedImages': 'No saved images yet',
     'status.emptySavedVideos': 'No saved videos yet',
     'viewer.shareMessage': 'Check out this status!',
@@ -226,14 +226,12 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Share failed',
     'viewer.shareFailedMessage':
       'We could not share this status. Try again shortly.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp not installed',
+    'viewer.whatsappNotInstalledTitle': 'App not installed',
     'viewer.whatsappNotInstalledMessage':
-      'Install WhatsApp to repost this status.',
-    'viewer.repostMessage':
-      'Sharing this status — tap My Status inside WhatsApp to repost.',
-    'viewer.repostTitle': 'Share to WhatsApp',
-    'viewer.repostFailedMessage':
-      'Could not share to WhatsApp. Try again shortly.',
+      'Install the app to repost this status.',
+    'viewer.repostMessage': 'Sharing this status — tap My Status to repost.',
+    'viewer.repostTitle': 'Share Status',
+    'viewer.repostFailedMessage': 'Could not share. Try again shortly.',
   },
   es: {
     'settings.title': 'Configuración',
@@ -259,12 +257,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertMessage':
       'Introduce un prefijo y número válidos.',
     'settings.directMessageWhatsappError':
-      'Comprueba si WhatsApp está instalado.',
+      'Comprueba si la app está instalada.',
     'settings.aboutTitle': 'Acerca de',
     'settings.aboutShare': 'Compartir app',
     'settings.aboutHelp': 'Ayuda',
     'settings.shareAppAlertTitle': 'Compartir app',
-    'settings.shareAppAlertMessage': '¡Cuenta a tus amigos sobre esta app!',
+    'settings.shareAppAlertMessage':
+      '¡Mira esta increíble app para guardar estados!',
     'settings.versionLabel': 'Versión 1.0.0',
     'settings.languageModalTitle': 'Selecciona un idioma',
     'settings.accessibility.close': 'Cerrar ajustes',
@@ -293,9 +292,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'No hay imágenes',
     'status.emptyVideos': 'No hay vídeos',
     'status.emptyImagesSubtitle':
-      'Desliza hacia abajo para actualizar o ve el estado de alguien en WhatsApp',
+      'Desliza hacia abajo para actualizar o ve el estado de alguien',
     'status.emptyVideosSubtitle':
-      'Desliza hacia abajo para actualizar o ve el estado de alguien en WhatsApp',
+      'Desliza hacia abajo para actualizar o ve el estado de alguien',
     'status.emptySavedImages': 'No hay imágenes guardadas aún',
     'status.emptySavedVideos': 'No hay vídeos guardados aún',
     'viewer.shareMessage': '¡Mira este estado!',
@@ -303,14 +302,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Error al compartir',
     'viewer.shareFailedMessage':
       'No se pudo compartir este estado. Inténtalo de nuevo.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp no instalado',
+    'viewer.whatsappNotInstalledTitle': 'App no instalada',
     'viewer.whatsappNotInstalledMessage':
-      'Instala WhatsApp para repostear este estado.',
+      'Instala la app para repostear este estado.',
     'viewer.repostMessage':
-      'Compartiendo este estado — toca Mi Estado en WhatsApp para repostear.',
-    'viewer.repostTitle': 'Compartir en WhatsApp',
-    'viewer.repostFailedMessage':
-      'No se pudo compartir en WhatsApp. Inténtalo de nuevo.',
+      'Compartiendo este estado — toca Mi Estado para repostear.',
+    'viewer.repostTitle': 'Compartir Estado',
+    'viewer.repostFailedMessage': 'No se pudo compartir. Inténtalo de nuevo.',
   },
   pt: {
     'settings.title': 'Configurações',
@@ -335,13 +333,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertTitle': 'Número obrigatório',
     'settings.directMessageAlertMessage':
       'Informe um código de país e número válidos.',
-    'settings.directMessageWhatsappError':
-      'Verifique se o WhatsApp está instalado.',
+    'settings.directMessageWhatsappError': 'Verifique se o app está instalado.',
     'settings.aboutTitle': 'Sobre',
     'settings.aboutShare': 'Compartilhar app',
     'settings.aboutHelp': 'Ajuda',
     'settings.shareAppAlertTitle': 'Compartilhar app',
-    'settings.shareAppAlertMessage': 'Conte para seus amigos sobre este app!',
+    'settings.shareAppAlertMessage':
+      'Confira este incrível app para salvar status!',
     'settings.versionLabel': 'Versão 1.0.0',
     'settings.languageModalTitle': 'Escolha um idioma',
     'settings.accessibility.close': 'Fechar configurações',
@@ -370,9 +368,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Nenhuma imagem encontrada',
     'status.emptyVideos': 'Nenhum vídeo encontrado',
     'status.emptyImagesSubtitle':
-      'Puxe para atualizar ou veja o status de alguém no WhatsApp',
+      'Puxe para atualizar ou veja o status de alguém',
     'status.emptyVideosSubtitle':
-      'Puxe para atualizar ou veja o status de alguém no WhatsApp',
+      'Puxe para atualizar ou veja o status de alguém',
     'status.emptySavedImages': 'Nenhuma imagem salva ainda',
     'status.emptySavedVideos': 'Nenhum vídeo salvo ainda',
     'viewer.shareMessage': 'Confira este status!',
@@ -380,14 +378,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Falha ao compartilhar',
     'viewer.shareFailedMessage':
       'Não foi possível compartilhar este status. Tente novamente.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp não instalado',
+    'viewer.whatsappNotInstalledTitle': 'App não instalado',
     'viewer.whatsappNotInstalledMessage':
-      'Instale o WhatsApp para repostar este status.',
+      'Instale o app para repostar este status.',
     'viewer.repostMessage':
-      'Compartilhando este status — toque em Meu Status no WhatsApp para repostar.',
-    'viewer.repostTitle': 'Compartilhar no WhatsApp',
+      'Compartilhando este status — toque em Meu Status para repostar.',
+    'viewer.repostTitle': 'Compartilhar Status',
     'viewer.repostFailedMessage':
-      'Não foi possível compartilhar no WhatsApp. Tente novamente.',
+      'Não foi possível compartilhar. Tente novamente.',
   },
   ru: {
     'settings.title': 'Настройки',
@@ -412,12 +410,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertTitle': 'Нужен номер телефона',
     'settings.directMessageAlertMessage':
       'Введите корректный код страны и номер телефона.',
-    'settings.directMessageWhatsappError': 'Проверьте, установлен ли WhatsApp.',
+    'settings.directMessageWhatsappError':
+      'Проверьте, установлено ли приложение.',
     'settings.aboutTitle': 'О приложении',
     'settings.aboutShare': 'Поделиться приложением',
     'settings.aboutHelp': 'Помощь',
     'settings.shareAppAlertTitle': 'Поделиться приложением',
-    'settings.shareAppAlertMessage': 'Расскажите друзьям об этом приложении!',
+    'settings.shareAppAlertMessage':
+      'Посмотрите это удивительное приложение для сохранения статусов!',
     'settings.versionLabel': 'Версия 1.0.0',
     'settings.languageModalTitle': 'Выберите язык',
     'settings.accessibility.close': 'Закрыть настройки',
@@ -446,9 +446,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Изображения не найдены',
     'status.emptyVideos': 'Видео не найдены',
     'status.emptyImagesSubtitle':
-      'Потяните вниз для обновления или посмотрите чей-то статус в WhatsApp',
+      'Потяните вниз для обновления или посмотрите чей-то статус',
     'status.emptyVideosSubtitle':
-      'Потяните вниз для обновления или посмотрите чей-то статус в WhatsApp',
+      'Потяните вниз для обновления или посмотрите чей-то статус',
     'status.emptySavedImages': 'Сохранённых изображений пока нет',
     'status.emptySavedVideos': 'Сохранённых видео пока нет',
     'viewer.shareMessage': 'Посмотрите этот статус!',
@@ -456,14 +456,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Ошибка при отправке',
     'viewer.shareFailedMessage':
       'Не удалось поделиться этим статусом. Попробуйте снова.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp не установлен',
+    'viewer.whatsappNotInstalledTitle': 'Приложение не установлено',
     'viewer.whatsappNotInstalledMessage':
-      'Установите WhatsApp, чтобы перепостить этот статус.',
+      'Установите приложение, чтобы перепостить этот статус.',
     'viewer.repostMessage':
-      'Отправка этого статуса — нажмите «Мой статус» в WhatsApp для перепоста.',
-    'viewer.repostTitle': 'Отправить в WhatsApp',
-    'viewer.repostFailedMessage':
-      'Не удалось отправить в WhatsApp. Попробуйте снова.',
+      'Отправка этого статуса — нажмите «Мой статус» для перепоста.',
+    'viewer.repostTitle': 'Отправить Статус',
+    'viewer.repostFailedMessage': 'Не удалось отправить. Попробуйте снова.',
   },
   fr: {
     'settings.title': 'Paramètres',
@@ -488,13 +487,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertTitle': 'Numéro requis',
     'settings.directMessageAlertMessage':
       'Veuillez saisir un indicatif pays et un numéro valides.',
-    'settings.directMessageWhatsappError':
-      'Vérifiez que WhatsApp est installé.',
+    'settings.directMessageWhatsappError': "Vérifiez que l'app est installée.",
     'settings.aboutTitle': 'À propos',
-    'settings.aboutShare': 'Partager l’app',
+    'settings.aboutShare': "Partager l'app",
     'settings.aboutHelp': 'Aide',
-    'settings.shareAppAlertTitle': 'Partager l’app',
-    'settings.shareAppAlertMessage': 'Parlez de cette app à vos amis !',
+    'settings.shareAppAlertTitle': "Partager l'app",
+    'settings.shareAppAlertMessage':
+      'Découvrez cette application incroyable pour sauvegarder les statuts !',
     'settings.versionLabel': 'Version 1.0.0',
     'settings.languageModalTitle': 'Choisissez une langue',
     'settings.accessibility.close': 'Fermer les réglages',
@@ -524,9 +523,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Aucune image trouvée',
     'status.emptyVideos': 'Aucune vidéo trouvée',
     'status.emptyImagesSubtitle':
-      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un sur WhatsApp",
+      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un",
     'status.emptyVideosSubtitle':
-      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un sur WhatsApp",
+      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un",
     'status.emptySavedImages': 'Aucune image enregistrée pour le moment',
     'status.emptySavedVideos': 'Aucune vidéo enregistrée pour le moment',
     'viewer.shareMessage': 'Découvrez ce statut !',
@@ -534,14 +533,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Échec du partage',
     'viewer.shareFailedMessage':
       'Impossible de partager ce statut. Réessayez bientôt.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp non installé',
+    'viewer.whatsappNotInstalledTitle': 'App non installée',
     'viewer.whatsappNotInstalledMessage':
-      'Installez WhatsApp pour reposter ce statut.',
+      "Installez l'app pour reposter ce statut.",
     'viewer.repostMessage':
-      'Partage de ce statut — appuyez sur Mon Statut dans WhatsApp pour reposter.',
-    'viewer.repostTitle': 'Partager sur WhatsApp',
-    'viewer.repostFailedMessage':
-      'Impossible de partager sur WhatsApp. Réessayez bientôt.',
+      'Partage de ce statut — appuyez sur Mon Statut pour reposter.',
+    'viewer.repostTitle': 'Partager Statut',
+    'viewer.repostFailedMessage': 'Impossible de partager. Réessayez bientôt.',
   },
   de: {
     'settings.title': 'Einstellungen',
@@ -567,12 +565,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertMessage':
       'Bitte gib eine gültige Ländervorwahl und Telefonnummer ein.',
     'settings.directMessageWhatsappError':
-      'Bitte prüfe, ob WhatsApp installiert ist.',
+      'Bitte prüfe, ob die App installiert ist.',
     'settings.aboutTitle': 'Über',
     'settings.aboutShare': 'App teilen',
     'settings.aboutHelp': 'Hilfe',
     'settings.shareAppAlertTitle': 'App teilen',
-    'settings.shareAppAlertMessage': 'Erzähle deinen Freunden von dieser App!',
+    'settings.shareAppAlertMessage':
+      'Schau dir diese fantastische App zum Speichern von Status an!',
     'settings.versionLabel': 'Version 1.0.0',
     'settings.languageModalTitle': 'Sprache auswählen',
     'settings.accessibility.close': 'Einstellungen schließen',
@@ -602,9 +601,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Keine Bilder gefunden',
     'status.emptyVideos': 'Keine Videos gefunden',
     'status.emptyImagesSubtitle':
-      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status auf WhatsApp an',
+      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status an',
     'status.emptyVideosSubtitle':
-      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status auf WhatsApp an',
+      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status an',
     'status.emptySavedImages': 'Noch keine Bilder gespeichert',
     'status.emptySavedVideos': 'Noch keine Videos gespeichert',
     'viewer.shareMessage': 'Sieh dir diesen Status an!',
@@ -612,14 +611,14 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Teilen fehlgeschlagen',
     'viewer.shareFailedMessage':
       'Dieser Status konnte nicht geteilt werden. Versuchen Sie es erneut.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp nicht installiert',
+    'viewer.whatsappNotInstalledTitle': 'App nicht installiert',
     'viewer.whatsappNotInstalledMessage':
-      'Installieren Sie WhatsApp, um diesen Status zu reposten.',
+      'Installieren Sie die App, um diesen Status zu reposten.',
     'viewer.repostMessage':
-      'Teilen dieses Status — tippen Sie in WhatsApp auf Mein Status, um zu reposten.',
-    'viewer.repostTitle': 'Auf WhatsApp teilen',
+      'Teilen dieses Status — tippen Sie auf Mein Status, um zu reposten.',
+    'viewer.repostTitle': 'Status Teilen',
     'viewer.repostFailedMessage':
-      'Konnte nicht auf WhatsApp teilen. Versuchen Sie es erneut.',
+      'Konnte nicht teilen. Versuchen Sie es erneut.',
   },
   it: {
     'settings.title': 'Impostazioni',
@@ -644,13 +643,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertTitle': 'Numero richiesto',
     'settings.directMessageAlertMessage':
       'Inserisci un prefisso e un numero validi.',
-    'settings.directMessageWhatsappError':
-      'Verifica che WhatsApp sia installato.',
+    'settings.directMessageWhatsappError': "Verifica che l'app sia installata.",
     'settings.aboutTitle': 'Informazioni',
     'settings.aboutShare': 'Condividi app',
     'settings.aboutHelp': 'Aiuto',
     'settings.shareAppAlertTitle': 'Condividi app',
-    'settings.shareAppAlertMessage': 'Parla di questa app ai tuoi amici!',
+    'settings.shareAppAlertMessage':
+      "Dai un'occhiata a questa fantastica app per salvare gli stati!",
     'settings.versionLabel': 'Versione 1.0.0',
     'settings.languageModalTitle': 'Scegli una lingua',
     'settings.accessibility.close': 'Chiudi impostazioni',
@@ -679,9 +678,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Nessuna immagine trovata',
     'status.emptyVideos': 'Nessun video trovato',
     'status.emptyImagesSubtitle':
-      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno su WhatsApp',
+      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno',
     'status.emptyVideosSubtitle':
-      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno su WhatsApp',
+      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno',
     'status.emptySavedImages': 'Nessuna immagine salvata ancora',
     'status.emptySavedVideos': 'Nessun video salvato ancora',
     'viewer.shareMessage': 'Guarda questo stato!',
@@ -689,14 +688,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Condivisione fallita',
     'viewer.shareFailedMessage':
       'Impossibile condividere questo stato. Riprova tra poco.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp non installato',
+    'viewer.whatsappNotInstalledTitle': 'App non installata',
     'viewer.whatsappNotInstalledMessage':
-      'Installa WhatsApp per ripostare questo stato.',
+      "Installa l'app per ripostare questo stato.",
     'viewer.repostMessage':
-      'Condivisione di questo stato — tocca Il mio stato in WhatsApp per ripostare.',
-    'viewer.repostTitle': 'Condividi su WhatsApp',
-    'viewer.repostFailedMessage':
-      'Impossibile condividere su WhatsApp. Riprova tra poco.',
+      'Condivisione di questo stato — tocca Il mio stato per ripostare.',
+    'viewer.repostTitle': 'Condividi Stato',
+    'viewer.repostFailedMessage': 'Impossibile condividere. Riprova tra poco.',
   },
   nl: {
     'settings.title': 'Instellingen',
@@ -722,12 +720,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.directMessageAlertMessage':
       'Voer een geldige landcode en telefoonnummer in.',
     'settings.directMessageWhatsappError':
-      'Controleer of WhatsApp is geïnstalleerd.',
+      'Controleer of de app is geïnstalleerd.',
     'settings.aboutTitle': 'Over',
     'settings.aboutShare': 'App delen',
     'settings.aboutHelp': 'Help',
     'settings.shareAppAlertTitle': 'App delen',
-    'settings.shareAppAlertMessage': 'Vertel je vrienden over deze app!',
+    'settings.shareAppAlertMessage':
+      'Bekijk deze geweldige app om statussen op te slaan!',
     'settings.versionLabel': 'Versie 1.0.0',
     'settings.languageModalTitle': 'Kies een taal',
     'settings.accessibility.close': 'Instellingen sluiten',
@@ -757,9 +756,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'status.emptyImages': 'Geen afbeeldingen gevonden',
     'status.emptyVideos': "Geen video's gevonden",
     'status.emptyImagesSubtitle':
-      'Trek naar beneden om te vernieuwen of bekijk iemands status op WhatsApp',
+      'Trek naar beneden om te vernieuwen of bekijk iemands status',
     'status.emptyVideosSubtitle':
-      'Trek naar beneden om te vernieuwen of bekijk iemands status op WhatsApp',
+      'Trek naar beneden om te vernieuwen of bekijk iemands status',
     'status.emptySavedImages': 'Nog geen afbeeldingen opgeslagen',
     'status.emptySavedVideos': "Nog geen video's opgeslagen",
     'viewer.shareMessage': 'Bekijk deze status!',
@@ -767,14 +766,13 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'viewer.shareFailedTitle': 'Delen mislukt',
     'viewer.shareFailedMessage':
       'Deze status kon niet worden gedeeld. Probeer het opnieuw.',
-    'viewer.whatsappNotInstalledTitle': 'WhatsApp niet geïnstalleerd',
+    'viewer.whatsappNotInstalledTitle': 'App niet geïnstalleerd',
     'viewer.whatsappNotInstalledMessage':
-      'Installeer WhatsApp om deze status opnieuw te posten.',
+      'Installeer de app om deze status opnieuw te posten.',
     'viewer.repostMessage':
-      'Deze status delen — tik op Mijn Status in WhatsApp om opnieuw te posten.',
-    'viewer.repostTitle': 'Delen op WhatsApp',
-    'viewer.repostFailedMessage':
-      'Kan niet delen op WhatsApp. Probeer het opnieuw.',
+      'Deze status delen — tik op Mijn Status om opnieuw te posten.',
+    'viewer.repostTitle': 'Status Delen',
+    'viewer.repostFailedMessage': 'Kan niet delen. Probeer het opnieuw.',
   },
 };
 

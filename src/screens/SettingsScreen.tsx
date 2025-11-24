@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -98,12 +99,25 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     [showMessage, t],
   );
 
-  const handleShareApp = useCallback(() => {
-    showMessage({
-      title: t('settings.shareAppAlertTitle'),
-      message: t('settings.shareAppAlertMessage'),
-      type: 'info',
-    });
+  const handleShareApp = useCallback(async () => {
+    try {
+      const playStoreUrl =
+        'https://play.google.com/store/apps/details?id=com.vaishnavmandlik.statussaverpro';
+      const shareMessage = `${t(
+        'settings.shareAppAlertMessage',
+      )}\n\n${playStoreUrl}`;
+
+      await Share.share({
+        message: shareMessage,
+        title: t('settings.shareAppAlertTitle'),
+      });
+    } catch (error) {
+      showMessage({
+        title: t('settings.shareAppAlertTitle'),
+        message: t('settings.shareAppAlertMessage'),
+        type: 'info',
+      });
+    }
   }, [showMessage, t]);
 
   const handleCountryCodeChange = useCallback((value: string) => {
