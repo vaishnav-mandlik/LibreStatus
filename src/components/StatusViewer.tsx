@@ -87,8 +87,8 @@ const ensureShareableFile = async (
     nameParts.length > 1
       ? nameParts[nameParts.length - 1].toLowerCase()
       : status.type === 'image'
-        ? 'jpg'
-        : 'mp4';
+      ? 'jpg'
+      : 'mp4';
   const safeName = sanitizeFilename(status.filename, ext);
   const cachePath = `${SHARE_CACHE_DIR}/${safeName}`;
 
@@ -339,9 +339,11 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
     }
 
     try {
-      const { uri: fileUri, filename, mime } = await ensureShareableFile(
-        currentStatus,
-      );
+      const {
+        uri: fileUri,
+        filename,
+        mime,
+      } = await ensureShareableFile(currentStatus);
 
       const shareOptions: any = {
         title: t('viewer.shareTitle'),
@@ -360,7 +362,11 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
       console.log('Share error:', error);
       // User cancelled or error occurred
       const message = error?.message ?? '';
-      if (message && !message.includes('User did not share') && !message.includes('cancelled')) {
+      if (
+        message &&
+        !message.includes('User did not share') &&
+        !message.includes('cancelled')
+      ) {
         showMessage({
           title: t('viewer.shareFailedTitle'),
           message: t('viewer.shareFailedMessage'),
@@ -388,9 +394,11 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
         return;
       }
 
-      const { uri: fileUri, filename, mime } = await ensureShareableFile(
-        currentStatus,
-      );
+      const {
+        uri: fileUri,
+        filename,
+        mime,
+      } = await ensureShareableFile(currentStatus);
 
       const shareOptions: any = {
         title: t('viewer.repostTitle'),
@@ -410,7 +418,11 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
       console.log('Repost error:', error);
       // User cancelled or error occurred
       const message = error?.message ?? '';
-      if (message && !message.includes('User did not share') && !message.includes('cancelled')) {
+      if (
+        message &&
+        !message.includes('User did not share') &&
+        !message.includes('cancelled')
+      ) {
         showMessage({
           title: t('viewer.shareFailedTitle'),
           message: t('viewer.repostFailedMessage'),
