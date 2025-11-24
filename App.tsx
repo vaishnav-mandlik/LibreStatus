@@ -27,11 +27,13 @@ import {
 } from 'react-native-safe-area-context';
 import StatusListScreen from './src/screens/StatusListScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import AboutScreen from './src/screens/AboutScreen';
+import HelpScreen from './src/screens/HelpScreen';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { FeedbackProvider } from './src/context/FeedbackContext';
 
-type TabType = 'status' | 'saved' | 'settings';
+type TabType = 'status' | 'saved' | 'settings' | 'about' | 'help';
 type MediaType = 'images' | 'videos';
 
 const { width } = Dimensions.get('window');
@@ -321,216 +323,238 @@ function AppContent() {
           </View>
         </View> */}
 
-        {activeTab !== 'settings' && (
-          <>
-            <View style={styles.mediaTabs}>
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.tabIndicator,
-                  {
-                    width: TAB_WIDTH,
-                    backgroundColor: activeColor,
-                    transform: [{ translateX: tabIndicatorTranslate }],
-                  },
-                ]}
-              />
-              <TouchableOpacity
-                style={styles.mediaTab}
-                onPress={() => handleMediaTabPress('images')}
-                accessibilityRole="button"
-                accessibilityLabel={t('tabs.imagesAccessibility')}
-              >
-                <Icon
-                  name="picture"
-                  size={18}
-                  color={activeMedia === 'images' ? activeColor : inactiveColor}
-                  style={styles.tabIcon}
+        {activeTab !== 'settings' &&
+          activeTab !== 'about' &&
+          activeTab !== 'help' && (
+            <>
+              <View style={styles.mediaTabs}>
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.tabIndicator,
+                    {
+                      width: TAB_WIDTH,
+                      backgroundColor: activeColor,
+                      transform: [{ translateX: tabIndicatorTranslate }],
+                    },
+                  ]}
                 />
-                <Animated.Text
-                  style={[styles.mediaTabText, { color: imagesLabelColor }]}
+                <TouchableOpacity
+                  style={styles.mediaTab}
+                  onPress={() => handleMediaTabPress('images')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tabs.imagesAccessibility')}
                 >
-                  {t('tabs.images')}
-                </Animated.Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.mediaTab}
-                onPress={() => handleMediaTabPress('videos')}
-                accessibilityRole="button"
-                accessibilityLabel={t('tabs.videosAccessibility')}
-              >
-                <Icon
-                  name="playcircleo"
-                  size={18}
-                  color={activeMedia === 'videos' ? activeColor : inactiveColor}
-                  style={styles.tabIcon}
-                />
-                <Animated.Text
-                  style={[styles.mediaTabText, { color: videosLabelColor }]}
+                  <Icon
+                    name="picture"
+                    size={18}
+                    color={
+                      activeMedia === 'images' ? activeColor : inactiveColor
+                    }
+                    style={styles.tabIcon}
+                  />
+                  <Animated.Text
+                    style={[styles.mediaTabText, { color: imagesLabelColor }]}
+                  >
+                    {t('tabs.images')}
+                  </Animated.Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.mediaTab}
+                  onPress={() => handleMediaTabPress('videos')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tabs.videosAccessibility')}
                 >
-                  {t('tabs.videos')}
-                </Animated.Text>
-              </TouchableOpacity>
-            </View>
+                  <Icon
+                    name="playcircleo"
+                    size={18}
+                    color={
+                      activeMedia === 'videos' ? activeColor : inactiveColor
+                    }
+                    style={styles.tabIcon}
+                  />
+                  <Animated.Text
+                    style={[styles.mediaTabText, { color: videosLabelColor }]}
+                  >
+                    {t('tabs.videos')}
+                  </Animated.Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={styles.content} {...panResponder.panHandlers}>
-              <Animated.View
-                style={[
-                  styles.contentSlider,
-                  { transform: [{ translateX: contentTranslateX }] },
-                ]}
-              >
-                <View
-                  pointerEvents={imagePointerEvents}
-                  style={styles.contentPage}
+              <View style={styles.content} {...panResponder.panHandlers}>
+                <Animated.View
+                  style={[
+                    styles.contentSlider,
+                    { transform: [{ translateX: contentTranslateX }] },
+                  ]}
                 >
-                  <StatusListScreen
-                    type="whatsapp"
-                    mediaFilter="images"
-                    activeTab={activeTab === 'saved' ? 'saved' : 'status'}
-                    reloadSignal={reloadTick}
-                  />
-                </View>
-                <View
-                  pointerEvents={videoPointerEvents}
-                  style={styles.contentPage}
-                >
-                  <StatusListScreen
-                    type="whatsapp"
-                    mediaFilter="videos"
-                    activeTab={activeTab === 'saved' ? 'saved' : 'status'}
-                    reloadSignal={reloadTick}
-                  />
-                </View>
-              </Animated.View>
-            </View>
-          </>
-        )}
+                  <View
+                    pointerEvents={imagePointerEvents}
+                    style={styles.contentPage}
+                  >
+                    <StatusListScreen
+                      type="whatsapp"
+                      mediaFilter="images"
+                      activeTab={activeTab === 'saved' ? 'saved' : 'status'}
+                      reloadSignal={reloadTick}
+                    />
+                  </View>
+                  <View
+                    pointerEvents={videoPointerEvents}
+                    style={styles.contentPage}
+                  >
+                    <StatusListScreen
+                      type="whatsapp"
+                      mediaFilter="videos"
+                      activeTab={activeTab === 'saved' ? 'saved' : 'status'}
+                      reloadSignal={reloadTick}
+                    />
+                  </View>
+                </Animated.View>
+              </View>
+            </>
+          )}
 
         {activeTab === 'settings' && (
           <View style={styles.contentStandalone}>
             <SettingsScreen
               onClose={() => setActiveTab(lastPrimaryTabRef.current)}
+              onNavigateToAbout={() => setActiveTab('about')}
+              onNavigateToHelp={() => setActiveTab('help')}
             />
           </View>
         )}
 
+        {activeTab === 'about' && (
+          <View style={styles.contentStandalone}>
+            <AboutScreen onClose={() => setActiveTab('settings')} />
+          </View>
+        )}
+
+        {activeTab === 'help' && (
+          <View style={styles.contentStandalone}>
+            <HelpScreen onClose={() => setActiveTab('settings')} />
+          </View>
+        )}
+
         {/* Bottom Navigation */}
-        <View
-          style={[
-            styles.bottomNav,
-            { paddingBottom: Math.max(insets.bottom, 16) },
-          ]}
-        >
-          <TouchableOpacity
+        {activeTab !== 'about' && activeTab !== 'help' && (
+          <View
             style={[
-              styles.navButton,
-              activeTab === 'status' && styles.navButtonActive,
+              styles.bottomNav,
+              { paddingBottom: Math.max(insets.bottom, 16) },
             ]}
-            onPress={() => setActiveTab('status')}
-            accessibilityRole="button"
-            accessibilityLabel={t('tabs.statusAccessibility')}
           >
-            <View
+            <TouchableOpacity
               style={[
-                styles.navIconCircle,
-                {
-                  backgroundColor:
-                    activeTab === 'status'
-                      ? navActiveCircleColor
-                      : navIdleCircleColor,
-                },
+                styles.navButton,
+                activeTab === 'status' && styles.navButtonActive,
               ]}
+              onPress={() => setActiveTab('status')}
+              accessibilityRole="button"
+              accessibilityLabel={t('tabs.statusAccessibility')}
             >
-              <MaterialIcon
-                name="update"
-                size={22}
-                color={activeTab === 'status' ? activeColor : inactiveColor}
-              />
-            </View>
-            <Text
+              <View
+                style={[
+                  styles.navIconCircle,
+                  {
+                    backgroundColor:
+                      activeTab === 'status'
+                        ? navActiveCircleColor
+                        : navIdleCircleColor,
+                  },
+                ]}
+              >
+                <MaterialIcon
+                  name="update"
+                  size={22}
+                  color={activeTab === 'status' ? activeColor : inactiveColor}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.navText,
+                  { color: inactiveColor },
+                  activeTab === 'status' && { color: activeColor },
+                ]}
+              >
+                {t('tabs.status')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.navText,
-                { color: inactiveColor },
-                activeTab === 'status' && { color: activeColor },
+                styles.navButton,
+                activeTab === 'saved' && styles.navButtonActive,
               ]}
+              onPress={() => setActiveTab('saved')}
+              accessibilityRole="button"
+              accessibilityLabel={t('tabs.savedAccessibility')}
             >
-              {t('tabs.status')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              activeTab === 'saved' && styles.navButtonActive,
-            ]}
-            onPress={() => setActiveTab('saved')}
-            accessibilityRole="button"
-            accessibilityLabel={t('tabs.savedAccessibility')}
-          >
-            <View
+              <View
+                style={[
+                  styles.navIconCircle,
+                  {
+                    backgroundColor:
+                      activeTab === 'saved'
+                        ? navActiveCircleColor
+                        : navIdleCircleColor,
+                  },
+                ]}
+              >
+                <Icon
+                  name="download"
+                  size={20}
+                  color={activeTab === 'saved' ? activeColor : inactiveColor}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.navText,
+                  { color: inactiveColor },
+                  activeTab === 'saved' && { color: activeColor },
+                ]}
+              >
+                {t('tabs.saved')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.navIconCircle,
-                {
-                  backgroundColor:
-                    activeTab === 'saved'
-                      ? navActiveCircleColor
-                      : navIdleCircleColor,
-                },
+                styles.navButton,
+                activeTab === 'settings' && styles.navButtonActive,
               ]}
+              onPress={() => setActiveTab('settings')}
+              accessibilityRole="button"
+              accessibilityLabel={t('tabs.settingsAccessibility')}
             >
-              <Icon
-                name="download"
-                size={20}
-                color={activeTab === 'saved' ? activeColor : inactiveColor}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navText,
-                { color: inactiveColor },
-                activeTab === 'saved' && { color: activeColor },
-              ]}
-            >
-              {t('tabs.saved')}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              activeTab === 'settings' && styles.navButtonActive,
-            ]}
-            onPress={() => setActiveTab('settings')}
-            accessibilityRole="button"
-            accessibilityLabel={t('tabs.settingsAccessibility')}
-          >
-            <View
-              style={[
-                styles.navIconCircle,
-                {
-                  backgroundColor:
-                    activeTab === 'settings'
-                      ? navActiveCircleColor
-                      : navIdleCircleColor,
-                },
-              ]}
-            >
-              <Icon
-                name="setting"
-                size={20}
-                color={activeTab === 'settings' ? activeColor : inactiveColor}
-              />
-            </View>
-            <Text
-              style={[
-                styles.navText,
-                { color: inactiveColor },
-                activeTab === 'settings' && { color: activeColor },
-              ]}
-            >
-              {t('tabs.settings')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <View
+                style={[
+                  styles.navIconCircle,
+                  {
+                    backgroundColor:
+                      activeTab === 'settings'
+                        ? navActiveCircleColor
+                        : navIdleCircleColor,
+                  },
+                ]}
+              >
+                <Icon
+                  name="setting"
+                  size={20}
+                  color={activeTab === 'settings' ? activeColor : inactiveColor}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.navText,
+                  { color: inactiveColor },
+                  activeTab === 'settings' && { color: activeColor },
+                ]}
+              >
+                {t('tabs.settings')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );

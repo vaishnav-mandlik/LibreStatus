@@ -22,9 +22,15 @@ import { useFeedback } from '../context/FeedbackContext';
 
 interface SettingsScreenProps {
   onClose: () => void;
+  onNavigateToAbout?: () => void;
+  onNavigateToHelp?: () => void;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  onClose,
+  onNavigateToAbout,
+  onNavigateToHelp,
+}) => {
   const { theme, themeMode, setThemeMode } = useTheme();
   const { language, setLanguage, t, options } = useLanguage();
   const { showMessage } = useFeedback();
@@ -75,30 +81,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
     return options.find(option => option.code === language) || options[0];
   }, [language, options]);
 
-  const openExternalLink = useCallback(
-    async (url: string, fallback: string) => {
-      try {
-        const supported = await Linking.canOpenURL(url);
-        if (!supported) {
-          showMessage({
-            title: t('general.unavailableTitle'),
-            message: fallback,
-            type: 'warning',
-          });
-          return;
-        }
-        await Linking.openURL(url);
-      } catch {
-        showMessage({
-          title: t('general.unavailableTitle'),
-          message: fallback,
-          type: 'warning',
-        });
-      }
-    },
-    [showMessage, t],
-  );
-
   const handleShareApp = useCallback(async () => {
     try {
       const playStoreUrl =
@@ -111,7 +93,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
         message: shareMessage,
         title: t('settings.shareAppAlertTitle'),
       });
-    } catch (error) {
+    } catch {
       showMessage({
         title: t('settings.shareAppAlertTitle'),
         message: t('settings.shareAppAlertMessage'),
@@ -419,12 +401,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
 
             <TouchableOpacity
               style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={() =>
-                openExternalLink(
-                  'https://faq.whatsapp.com/',
-                  t('general.unavailableMessage'),
-                )
-              }
+              onPress={onNavigateToHelp}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t('settings.aboutHelp')}
@@ -444,6 +421,54 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose }) => {
                 </View>
                 <Text style={[styles.rowTitle, { color: theme.text }]}>
                   {t('settings.aboutHelp')}
+                </Text>
+              </View>
+              <Icon name="right" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.row, { backgroundColor: theme.surface }]}
+              onPress={() =>
+                Linking.openURL('https://forms.gle/r5iuiKeWxaCe2T347')
+              }
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Feedback"
+            >
+              <View style={styles.rowLeft}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon name="message1" size={18} color={theme.primary} />
+                </View>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  Feedback
+                </Text>
+              </View>
+              <Icon name="right" size={16} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.row, { backgroundColor: theme.surface }]}
+              onPress={onNavigateToAbout}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.aboutTitle')}
+            >
+              <View style={styles.rowLeft}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    { backgroundColor: theme.surfaceVariant },
+                  ]}
+                >
+                  <Icon name="infocirlceo" size={18} color={theme.primary} />
+                </View>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>
+                  {t('settings.aboutTitle')}
                 </Text>
               </View>
               <Icon name="right" size={16} color={theme.textSecondary} />
