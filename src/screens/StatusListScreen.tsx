@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
   row: {
     justifyContent: 'space-between',
