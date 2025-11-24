@@ -141,8 +141,7 @@ const StatusViewer: React.FC<StatusViewerProps> = ({
   );
 };
 
-interface StatusViewerContentProps
-  extends Omit<StatusViewerProps, 'visible'> {
+interface StatusViewerContentProps extends Omit<StatusViewerProps, 'visible'> {
   visible: boolean;
 }
 
@@ -158,6 +157,7 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
   const flatListRef = useRef<FlatList<StatusFile>>(null);
   const videoRef = useRef<any>(null);
   const progressBarWidth = useRef(0);
+  const hasInitialized = useRef(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -177,8 +177,16 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
 
   useEffect(() => {
     if (!visible || statuses.length === 0) {
+      hasInitialized.current = false;
       return;
     }
+
+    // Only initialize once when viewer opens, not when statuses array updates
+    if (hasInitialized.current) {
+      return;
+    }
+
+    hasInitialized.current = true;
 
     const safeIndex = Math.min(
       Math.max(initialIndex, 0),
@@ -466,7 +474,15 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
         </View>
       );
     },
-    [currentIndex, handleTogglePlayback, handleVideoEnd, handleVideoLoad, handleVideoProgress, isBuffering, isPlaying],
+    [
+      currentIndex,
+      handleTogglePlayback,
+      handleVideoEnd,
+      handleVideoLoad,
+      handleVideoProgress,
+      isBuffering,
+      isPlaying,
+    ],
   );
 
   const handleScrollToIndexFailed = useCallback(() => {
