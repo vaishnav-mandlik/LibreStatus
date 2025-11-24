@@ -79,7 +79,30 @@ type TranslationKey =
   | 'tabs.videosAccessibility'
   | 'tabs.statusAccessibility'
   | 'tabs.savedAccessibility'
-  | 'tabs.settingsAccessibility';
+  | 'tabs.settingsAccessibility'
+  | 'status.errorLoadTitle'
+  | 'status.errorLoadMessage'
+  | 'status.savedTitle'
+  | 'status.savedMessage'
+  | 'status.errorSaveTitle'
+  | 'status.errorSaveMessage'
+  | 'status.errorPermissionTitle'
+  | 'status.errorPermissionMessage'
+  | 'status.emptyImages'
+  | 'status.emptyVideos'
+  | 'status.emptyImagesSubtitle'
+  | 'status.emptyVideosSubtitle'
+  | 'status.emptySavedImages'
+  | 'status.emptySavedVideos'
+  | 'viewer.shareMessage'
+  | 'viewer.shareTitle'
+  | 'viewer.shareFailedTitle'
+  | 'viewer.shareFailedMessage'
+  | 'viewer.whatsappNotInstalledTitle'
+  | 'viewer.whatsappNotInstalledMessage'
+  | 'viewer.repostMessage'
+  | 'viewer.repostTitle'
+  | 'viewer.repostFailedMessage';
 
 type TranslationDictionary = Record<TranslationKey, string>;
 
@@ -130,6 +153,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Show recent statuses',
     'tabs.savedAccessibility': 'Show saved items',
     'tabs.settingsAccessibility': 'Open settings',
+    'status.errorLoadTitle': 'Failed to load statuses',
+    'status.errorLoadMessage': 'Please try again in a moment.',
+    'status.savedTitle': 'Saved to gallery',
+    'status.savedMessage': 'Status is now available in your downloads.',
+    'status.errorSaveTitle': 'Failed to save',
+    'status.errorSaveMessage': 'Please try again after a moment.',
+    'status.errorPermissionTitle': 'Something went wrong',
+    'status.errorPermissionMessage':
+      'Unable to open folder picker. Please try again.',
+    'status.emptyImages': 'No images found',
+    'status.emptyVideos': 'No videos found',
+    'status.emptyImagesSubtitle':
+      "Pull down to refresh or view someone's status on WhatsApp",
+    'status.emptyVideosSubtitle':
+      "Pull down to refresh or view someone's status on WhatsApp",
+    'status.emptySavedImages': 'No saved images yet',
+    'status.emptySavedVideos': 'No saved videos yet',
+    'viewer.shareMessage': 'Check out this status!',
+    'viewer.shareTitle': 'Share Status',
+    'viewer.shareFailedTitle': 'Share failed',
+    'viewer.shareFailedMessage':
+      'We could not share this status. Try again shortly.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp not installed',
+    'viewer.whatsappNotInstalledMessage':
+      'Install WhatsApp to repost this status.',
+    'viewer.repostMessage':
+      'Sharing this status — tap My Status inside WhatsApp to repost.',
+    'viewer.repostTitle': 'Share to WhatsApp',
+    'viewer.repostFailedMessage':
+      'Could not share to WhatsApp. Try again shortly.',
   },
   es: {
     'settings.title': 'Configuración',
@@ -177,6 +230,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Mostrar estados recientes',
     'tabs.savedAccessibility': 'Mostrar elementos guardados',
     'tabs.settingsAccessibility': 'Abrir ajustes',
+    'status.errorLoadTitle': 'Error al cargar estados',
+    'status.errorLoadMessage': 'Inténtalo de nuevo en un momento.',
+    'status.savedTitle': 'Guardado en galería',
+    'status.savedMessage': 'El estado está ahora en tus descargas.',
+    'status.errorSaveTitle': 'Error al guardar',
+    'status.errorSaveMessage': 'Inténtalo de nuevo más tarde.',
+    'status.errorPermissionTitle': 'Algo salió mal',
+    'status.errorPermissionMessage':
+      'No se pudo abrir el selector de carpetas. Inténtalo de nuevo.',
+    'status.emptyImages': 'No hay imágenes',
+    'status.emptyVideos': 'No hay vídeos',
+    'status.emptyImagesSubtitle':
+      'Desliza hacia abajo para actualizar o ve el estado de alguien en WhatsApp',
+    'status.emptyVideosSubtitle':
+      'Desliza hacia abajo para actualizar o ve el estado de alguien en WhatsApp',
+    'status.emptySavedImages': 'No hay imágenes guardadas aún',
+    'status.emptySavedVideos': 'No hay vídeos guardados aún',
+    'viewer.shareMessage': '¡Mira este estado!',
+    'viewer.shareTitle': 'Compartir estado',
+    'viewer.shareFailedTitle': 'Error al compartir',
+    'viewer.shareFailedMessage':
+      'No se pudo compartir este estado. Inténtalo de nuevo.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp no instalado',
+    'viewer.whatsappNotInstalledMessage':
+      'Instala WhatsApp para repostear este estado.',
+    'viewer.repostMessage':
+      'Compartiendo este estado — toca Mi Estado en WhatsApp para repostear.',
+    'viewer.repostTitle': 'Compartir en WhatsApp',
+    'viewer.repostFailedMessage':
+      'No se pudo compartir en WhatsApp. Inténtalo de nuevo.',
   },
   pt: {
     'settings.title': 'Configurações',
@@ -224,6 +307,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Mostrar status recentes',
     'tabs.savedAccessibility': 'Mostrar itens salvos',
     'tabs.settingsAccessibility': 'Abrir configurações',
+    'status.errorLoadTitle': 'Falha ao carregar status',
+    'status.errorLoadMessage': 'Tente novamente em breve.',
+    'status.savedTitle': 'Salvo na galeria',
+    'status.savedMessage': 'Status disponível em seus downloads.',
+    'status.errorSaveTitle': 'Falha ao salvar',
+    'status.errorSaveMessage': 'Tente novamente mais tarde.',
+    'status.errorPermissionTitle': 'Algo deu errado',
+    'status.errorPermissionMessage':
+      'Não foi possível abrir o seletor de pasta. Tente novamente.',
+    'status.emptyImages': 'Nenhuma imagem encontrada',
+    'status.emptyVideos': 'Nenhum vídeo encontrado',
+    'status.emptyImagesSubtitle':
+      'Puxe para atualizar ou veja o status de alguém no WhatsApp',
+    'status.emptyVideosSubtitle':
+      'Puxe para atualizar ou veja o status de alguém no WhatsApp',
+    'status.emptySavedImages': 'Nenhuma imagem salva ainda',
+    'status.emptySavedVideos': 'Nenhum vídeo salvo ainda',
+    'viewer.shareMessage': 'Confira este status!',
+    'viewer.shareTitle': 'Compartilhar status',
+    'viewer.shareFailedTitle': 'Falha ao compartilhar',
+    'viewer.shareFailedMessage':
+      'Não foi possível compartilhar este status. Tente novamente.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp não instalado',
+    'viewer.whatsappNotInstalledMessage':
+      'Instale o WhatsApp para repostar este status.',
+    'viewer.repostMessage':
+      'Compartilhando este status — toque em Meu Status no WhatsApp para repostar.',
+    'viewer.repostTitle': 'Compartilhar no WhatsApp',
+    'viewer.repostFailedMessage':
+      'Não foi possível compartilhar no WhatsApp. Tente novamente.',
   },
   ru: {
     'settings.title': 'Настройки',
@@ -270,6 +383,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Показать недавние статусы',
     'tabs.savedAccessibility': 'Показать сохранённые элементы',
     'tabs.settingsAccessibility': 'Открыть настройки',
+    'status.errorLoadTitle': 'Не удалось загрузить статусы',
+    'status.errorLoadMessage': 'Попробуйте снова через некоторое время.',
+    'status.savedTitle': 'Сохранено в галерею',
+    'status.savedMessage': 'Статус теперь доступен в загрузках.',
+    'status.errorSaveTitle': 'Не удалось сохранить',
+    'status.errorSaveMessage': 'Попробуйте снова позже.',
+    'status.errorPermissionTitle': 'Что-то пошло не так',
+    'status.errorPermissionMessage':
+      'Не удалось открыть выбор папки. Попробуйте снова.',
+    'status.emptyImages': 'Изображения не найдены',
+    'status.emptyVideos': 'Видео не найдены',
+    'status.emptyImagesSubtitle':
+      'Потяните вниз для обновления или посмотрите чей-то статус в WhatsApp',
+    'status.emptyVideosSubtitle':
+      'Потяните вниз для обновления или посмотрите чей-то статус в WhatsApp',
+    'status.emptySavedImages': 'Сохранённых изображений пока нет',
+    'status.emptySavedVideos': 'Сохранённых видео пока нет',
+    'viewer.shareMessage': 'Посмотрите этот статус!',
+    'viewer.shareTitle': 'Поделиться статусом',
+    'viewer.shareFailedTitle': 'Ошибка при отправке',
+    'viewer.shareFailedMessage':
+      'Не удалось поделиться этим статусом. Попробуйте снова.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp не установлен',
+    'viewer.whatsappNotInstalledMessage':
+      'Установите WhatsApp, чтобы перепостить этот статус.',
+    'viewer.repostMessage':
+      'Отправка этого статуса — нажмите «Мой статус» в WhatsApp для перепоста.',
+    'viewer.repostTitle': 'Отправить в WhatsApp',
+    'viewer.repostFailedMessage':
+      'Не удалось отправить в WhatsApp. Попробуйте снова.',
   },
   fr: {
     'settings.title': 'Paramètres',
@@ -317,6 +460,37 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Afficher les statuts récents',
     'tabs.savedAccessibility': 'Afficher les éléments enregistrés',
     'tabs.settingsAccessibility': 'Ouvrir les réglages',
+    'status.errorLoadTitle': 'Échec du chargement des statuts',
+    'status.errorLoadMessage': 'Veuillez réessayer dans un instant.',
+    'status.savedTitle': 'Enregistré dans la galerie',
+    'status.savedMessage':
+      'Le statut est maintenant disponible dans vos téléchargements.',
+    'status.errorSaveTitle': "Échec de l'enregistrement",
+    'status.errorSaveMessage': 'Veuillez réessayer plus tard.',
+    'status.errorPermissionTitle': "Une erreur s'est produite",
+    'status.errorPermissionMessage':
+      "Impossible d'ouvrir le sélecteur de dossier. Veuillez réessayer.",
+    'status.emptyImages': 'Aucune image trouvée',
+    'status.emptyVideos': 'Aucune vidéo trouvée',
+    'status.emptyImagesSubtitle':
+      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un sur WhatsApp",
+    'status.emptyVideosSubtitle':
+      "Tirez vers le bas pour actualiser ou consultez le statut de quelqu'un sur WhatsApp",
+    'status.emptySavedImages': 'Aucune image enregistrée pour le moment',
+    'status.emptySavedVideos': 'Aucune vidéo enregistrée pour le moment',
+    'viewer.shareMessage': 'Découvrez ce statut !',
+    'viewer.shareTitle': 'Partager le statut',
+    'viewer.shareFailedTitle': 'Échec du partage',
+    'viewer.shareFailedMessage':
+      'Impossible de partager ce statut. Réessayez bientôt.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp non installé',
+    'viewer.whatsappNotInstalledMessage':
+      'Installez WhatsApp pour reposter ce statut.',
+    'viewer.repostMessage':
+      'Partage de ce statut — appuyez sur Mon Statut dans WhatsApp pour reposter.',
+    'viewer.repostTitle': 'Partager sur WhatsApp',
+    'viewer.repostFailedMessage':
+      'Impossible de partager sur WhatsApp. Réessayez bientôt.',
   },
   de: {
     'settings.title': 'Einstellungen',
@@ -365,6 +539,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Aktuelle Status anzeigen',
     'tabs.savedAccessibility': 'Gespeicherte Elemente anzeigen',
     'tabs.settingsAccessibility': 'Einstellungen öffnen',
+    'status.errorLoadTitle': 'Status konnte nicht geladen werden',
+    'status.errorLoadMessage': 'Bitte versuchen Sie es später erneut.',
+    'status.savedTitle': 'In Galerie gespeichert',
+    'status.savedMessage': 'Status ist jetzt in Ihren Downloads verfügbar.',
+    'status.errorSaveTitle': 'Speichern fehlgeschlagen',
+    'status.errorSaveMessage': 'Bitte versuchen Sie es später erneut.',
+    'status.errorPermissionTitle': 'Etwas ist schief gelaufen',
+    'status.errorPermissionMessage':
+      'Ordnerauswahl konnte nicht geöffnet werden. Bitte erneut versuchen.',
+    'status.emptyImages': 'Keine Bilder gefunden',
+    'status.emptyVideos': 'Keine Videos gefunden',
+    'status.emptyImagesSubtitle':
+      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status auf WhatsApp an',
+    'status.emptyVideosSubtitle':
+      'Ziehen Sie nach unten zum Aktualisieren oder sehen Sie sich jemandes Status auf WhatsApp an',
+    'status.emptySavedImages': 'Noch keine Bilder gespeichert',
+    'status.emptySavedVideos': 'Noch keine Videos gespeichert',
+    'viewer.shareMessage': 'Sieh dir diesen Status an!',
+    'viewer.shareTitle': 'Status teilen',
+    'viewer.shareFailedTitle': 'Teilen fehlgeschlagen',
+    'viewer.shareFailedMessage':
+      'Dieser Status konnte nicht geteilt werden. Versuchen Sie es erneut.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp nicht installiert',
+    'viewer.whatsappNotInstalledMessage':
+      'Installieren Sie WhatsApp, um diesen Status zu reposten.',
+    'viewer.repostMessage':
+      'Teilen dieses Status — tippen Sie in WhatsApp auf Mein Status, um zu reposten.',
+    'viewer.repostTitle': 'Auf WhatsApp teilen',
+    'viewer.repostFailedMessage':
+      'Konnte nicht auf WhatsApp teilen. Versuchen Sie es erneut.',
   },
   it: {
     'settings.title': 'Impostazioni',
@@ -412,6 +616,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Mostra stati recenti',
     'tabs.savedAccessibility': 'Mostra elementi salvati',
     'tabs.settingsAccessibility': 'Apri impostazioni',
+    'status.errorLoadTitle': 'Impossibile caricare gli stati',
+    'status.errorLoadMessage': 'Riprova tra poco.',
+    'status.savedTitle': 'Salvato nella galleria',
+    'status.savedMessage': 'Lo stato è ora disponibile nei tuoi download.',
+    'status.errorSaveTitle': 'Salvataggio fallito',
+    'status.errorSaveMessage': 'Riprova più tardi.',
+    'status.errorPermissionTitle': 'Qualcosa è andato storto',
+    'status.errorPermissionMessage':
+      'Impossibile aprire il selettore di cartelle. Riprova.',
+    'status.emptyImages': 'Nessuna immagine trovata',
+    'status.emptyVideos': 'Nessun video trovato',
+    'status.emptyImagesSubtitle':
+      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno su WhatsApp',
+    'status.emptyVideosSubtitle':
+      'Scorri verso il basso per aggiornare o visualizza lo stato di qualcuno su WhatsApp',
+    'status.emptySavedImages': 'Nessuna immagine salvata ancora',
+    'status.emptySavedVideos': 'Nessun video salvato ancora',
+    'viewer.shareMessage': 'Guarda questo stato!',
+    'viewer.shareTitle': 'Condividi stato',
+    'viewer.shareFailedTitle': 'Condivisione fallita',
+    'viewer.shareFailedMessage':
+      'Impossibile condividere questo stato. Riprova tra poco.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp non installato',
+    'viewer.whatsappNotInstalledMessage':
+      'Installa WhatsApp per ripostare questo stato.',
+    'viewer.repostMessage':
+      'Condivisione di questo stato — tocca Il mio stato in WhatsApp per ripostare.',
+    'viewer.repostTitle': 'Condividi su WhatsApp',
+    'viewer.repostFailedMessage':
+      'Impossibile condividere su WhatsApp. Riprova tra poco.',
   },
   nl: {
     'settings.title': 'Instellingen',
@@ -460,6 +694,36 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'tabs.statusAccessibility': 'Recente statussen tonen',
     'tabs.savedAccessibility': 'Opgeslagen items tonen',
     'tabs.settingsAccessibility': 'Instellingen openen',
+    'status.errorLoadTitle': 'Laden van statussen mislukt',
+    'status.errorLoadMessage': 'Probeer het over een moment opnieuw.',
+    'status.savedTitle': 'Opgeslagen in galerij',
+    'status.savedMessage': 'Status is nu beschikbaar in je downloads.',
+    'status.errorSaveTitle': 'Opslaan mislukt',
+    'status.errorSaveMessage': 'Probeer het later opnieuw.',
+    'status.errorPermissionTitle': 'Er is iets misgegaan',
+    'status.errorPermissionMessage':
+      'Kan mappenkiezer niet openen. Probeer het opnieuw.',
+    'status.emptyImages': 'Geen afbeeldingen gevonden',
+    'status.emptyVideos': "Geen video's gevonden",
+    'status.emptyImagesSubtitle':
+      'Trek naar beneden om te vernieuwen of bekijk iemands status op WhatsApp',
+    'status.emptyVideosSubtitle':
+      'Trek naar beneden om te vernieuwen of bekijk iemands status op WhatsApp',
+    'status.emptySavedImages': 'Nog geen afbeeldingen opgeslagen',
+    'status.emptySavedVideos': "Nog geen video's opgeslagen",
+    'viewer.shareMessage': 'Bekijk deze status!',
+    'viewer.shareTitle': 'Status delen',
+    'viewer.shareFailedTitle': 'Delen mislukt',
+    'viewer.shareFailedMessage':
+      'Deze status kon niet worden gedeeld. Probeer het opnieuw.',
+    'viewer.whatsappNotInstalledTitle': 'WhatsApp niet geïnstalleerd',
+    'viewer.whatsappNotInstalledMessage':
+      'Installeer WhatsApp om deze status opnieuw te posten.',
+    'viewer.repostMessage':
+      'Deze status delen — tik op Mijn Status in WhatsApp om opnieuw te posten.',
+    'viewer.repostTitle': 'Delen op WhatsApp',
+    'viewer.repostFailedMessage':
+      'Kan niet delen op WhatsApp. Probeer het opnieuw.',
   },
 };
 

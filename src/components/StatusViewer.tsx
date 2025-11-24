@@ -34,6 +34,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import type { StatusFile } from '../types';
 import { useFeedback, FeedbackProvider } from '../context/FeedbackContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const SCREEN = Dimensions.get('window');
 const SCREEN_WIDTH = SCREEN.width;
@@ -154,6 +155,7 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
   onSave,
 }) => {
   const { showMessage } = useFeedback();
+  const { t } = useLanguage();
   const flatListRef = useRef<FlatList<StatusFile>>(null);
   const videoRef = useRef<any>(null);
   const progressBarWidth = useRef(0);
@@ -266,18 +268,18 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
 
     try {
       await Share.share({
-        message: 'Check out this status!',
+        message: t('viewer.shareMessage'),
         url: currentStatus.uri,
-        title: 'Share Status',
+        title: t('viewer.shareTitle'),
       });
     } catch {
       showMessage({
-        title: 'Share failed',
-        message: 'We could not share this status. Try again shortly.',
+        title: t('viewer.shareFailedTitle'),
+        message: t('viewer.shareFailedMessage'),
         type: 'error',
       });
     }
-  }, [currentStatus, showMessage]);
+  }, [currentStatus, showMessage, t]);
 
   const handleRepost = useCallback(async () => {
     if (!currentStatus) {
@@ -290,8 +292,8 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
       const hasWhatsapp = await Linking.canOpenURL(whatsappScheme);
       if (!hasWhatsapp) {
         showMessage({
-          title: 'WhatsApp not installed',
-          message: 'Install WhatsApp to repost this status.',
+          title: t('viewer.whatsappNotInstalledTitle'),
+          message: t('viewer.whatsappNotInstalledMessage'),
           type: 'warning',
         });
         return;
@@ -299,18 +301,17 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
 
       await Share.share({
         url: currentStatus.uri,
-        message:
-          'Sharing this status — tap My Status inside WhatsApp to repost.',
-        title: 'Share to WhatsApp',
+        message: t('viewer.repostMessage'),
+        title: t('viewer.repostTitle'),
       });
     } catch {
       showMessage({
-        title: 'Share failed',
-        message: 'Could not share to WhatsApp. Try again shortly.',
+        title: t('viewer.shareFailedTitle'),
+        message: t('viewer.repostFailedMessage'),
         type: 'error',
       });
     }
-  }, [currentStatus, showMessage]);
+  }, [currentStatus, showMessage, t]);
 
   const handleTogglePlayback = useCallback(() => {
     if (currentStatus?.type !== 'video') {

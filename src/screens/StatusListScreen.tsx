@@ -36,6 +36,7 @@ import {
 import { hasFolderAccess, requestFolderAccess } from '../utils/folderPicker';
 import { useTheme } from '../context/ThemeContext';
 import { useFeedback } from '../context/FeedbackContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const statusCache = new Map<string, StatusFile[]>();
 const savedCache = new Map<string, StatusFile[]>();
@@ -81,6 +82,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 }) => {
   const { theme } = useTheme();
   const { showMessage } = useFeedback();
+  const { t } = useLanguage();
   const cacheKey = `${type}-statuses`;
   const savedCacheKey = `${type}-saved`;
 
@@ -284,8 +286,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       } catch (error) {
         console.error('❌ Error loading statuses:', error);
         showMessage({
-          title: 'Failed to load statuses',
-          message: 'Please try again in a moment.',
+          title: t('status.errorLoadTitle'),
+          message: t('status.errorLoadMessage'),
           type: 'error',
         });
       } finally {
@@ -300,6 +302,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       showMessage,
       showPermissionGuide,
       type,
+      t,
     ],
   );
 
@@ -374,8 +377,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           });
 
           showMessage({
-            title: 'Saved to gallery',
-            message: 'Status is now available in your downloads.',
+            title: t('status.savedTitle'),
+            message: t('status.savedMessage'),
             type: 'success',
           });
 
@@ -384,8 +387,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           return true;
         } else {
           showMessage({
-            title: 'Failed to save',
-            message: 'Please try again after a moment.',
+            title: t('status.errorSaveTitle'),
+            message: t('status.errorSaveMessage'),
             type: 'error',
           });
           return false;
@@ -393,8 +396,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       } catch (error) {
         console.error('Error saving status:', error);
         showMessage({
-          title: 'Failed to save',
-          message: 'Please try again after a moment.',
+          title: t('status.errorSaveTitle'),
+          message: t('status.errorSaveMessage'),
           type: 'error',
         });
         return false;
@@ -402,7 +405,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setSavingId(null);
       }
     },
-    [showMessage, loadSavedStatuses, cacheKey],
+    [showMessage, loadSavedStatuses, cacheKey, t],
   );
 
   const filteredStatuses = useMemo(() => {
@@ -534,8 +537,8 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       } catch (error) {
         console.error('❌ Error requesting folder access:', error);
         showMessage({
-          title: 'Something went wrong',
-          message: 'Unable to open folder picker. Please try again.',
+          title: t('status.errorPermissionTitle'),
+          message: t('status.errorPermissionMessage'),
           type: 'error',
         });
       } finally {
@@ -544,7 +547,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setStatusLoading(false);
       }
     })();
-  }, [type, showMessage]);
+  }, [type, showMessage, t]);
 
   const handlePermissionGuideCancel = useCallback(() => {
     isAwaitingPermission.current = false;
@@ -566,12 +569,18 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             style={styles.emptyIcon}
           />
           <Text style={[styles.emptyText, { color: theme.text }]}>
-            No {mediaFilter} found
+            {mediaFilter === 'images'
+              ? t('status.emptyImages')
+              : t('status.emptyVideos')}
           </Text>
           <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
             {activeTab === 'saved'
-              ? `No saved ${mediaFilter} yet`
-              : "Pull down to refresh or view someone's status on WhatsApp"}
+              ? mediaFilter === 'images'
+                ? t('status.emptySavedImages')
+                : t('status.emptySavedVideos')
+              : mediaFilter === 'images'
+              ? t('status.emptyImagesSubtitle')
+              : t('status.emptyVideosSubtitle')}
           </Text>
         </View>
         <PermissionGuideModal
