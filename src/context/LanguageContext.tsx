@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeModules, Platform } from 'react-native';
 
 export type LanguageCode =
   | 'en'
@@ -35,6 +36,56 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 const STORAGE_KEY = 'app_language';
+
+/**
+ * Maps locale codes to supported language codes
+ * Detects device language and returns appropriate app language
+ */
+const getDeviceLanguage = (): LanguageCode => {
+  try {
+    let deviceLocale = 'en';
+
+    if (Platform.OS === 'ios') {
+      deviceLocale =
+        NativeModules.SettingsManager?.settings?.AppleLocale ||
+        NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
+        'en';
+    } else if (Platform.OS === 'android') {
+      deviceLocale = NativeModules.I18nManager?.localeIdentifier || 'en';
+    }
+
+    // Extract language code (e.g., 'en_US' -> 'en', 'pt_BR' -> 'pt')
+    const languageCode = deviceLocale.split(/[-_]/)[0].toLowerCase();
+
+    // Map to supported languages
+    // Spanish: Spain, Mexico, Argentina, Colombia, etc.
+    if (languageCode === 'es') return 'es';
+
+    // Portuguese: Brazil, Portugal
+    if (languageCode === 'pt') return 'pt';
+
+    // Russian: Russia, Belarus, Kazakhstan, etc.
+    if (languageCode === 'ru') return 'ru';
+
+    // French: France, Belgium, Canada, Switzerland, etc.
+    if (languageCode === 'fr') return 'fr';
+
+    // German: Germany, Austria, Switzerland, etc.
+    if (languageCode === 'de') return 'de';
+
+    // Italian: Italy, Switzerland
+    if (languageCode === 'it') return 'it';
+
+    // Dutch: Netherlands, Belgium
+    if (languageCode === 'nl') return 'nl';
+
+    // Default to English for all other languages
+    return 'en';
+  } catch (error) {
+    console.log('Error detecting device language, defaulting to English');
+    return 'en';
+  }
+};
 
 type TranslationKey =
   | 'settings.title'
@@ -744,13 +795,28 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   const [language, setLanguageState] = useState<LanguageCode>('en');
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then(stored => {
+    const initializeLanguage = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+
         if (stored && stored in TRANSLATIONS) {
+          // User has previously set a language preference
           setLanguageState(stored as LanguageCode);
+        } else {
+          // First time user - detect device language
+          const deviceLang = getDeviceLanguage();
+          setLanguageState(deviceLang);
+          // Save the detected language
+          await AsyncStorage.setItem(STORAGE_KEY, deviceLang);
+          console.log(`Auto-detected language: ${deviceLang}`);
         }
-      })
-      .catch(() => undefined);
+      } catch {
+        // On error, default to English
+        setLanguageState('en');
+      }
+    };
+
+    initializeLanguage();
   }, []);
 
   const setLanguage = useCallback((code: LanguageCode) => {
