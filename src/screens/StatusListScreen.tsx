@@ -569,7 +569,9 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             No {mediaFilter} found
           </Text>
           <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
-            Pull down to refresh or view someone's status on WhatsApp
+            {activeTab === 'saved'
+              ? `No saved ${mediaFilter} yet`
+              : "Pull down to refresh or view someone's status on WhatsApp"}
           </Text>
         </View>
         <PermissionGuideModal
