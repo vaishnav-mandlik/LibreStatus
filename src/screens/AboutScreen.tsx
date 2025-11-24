@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useTheme } from '../context/ThemeContext';
@@ -172,11 +173,48 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ onClose }) => {
           </View>
 
           <View style={styles.footer}>
+            <View style={styles.footerLinks}>
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(
+                    'https://sites.google.com/view/statussaver-pro-privacy-policy/home',
+                  )
+                }
+                style={styles.footerLink}
+              >
+                <Icon name="lock" size={14} color={theme.primary} />
+                <Text style={[styles.footerLinkText, { color: theme.primary }]}>
+                  Privacy Policy
+                </Text>
+              </TouchableOpacity>
+
+              <Text
+                style={[styles.footerDivider, { color: theme.textSecondary }]}
+              >
+                •
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  Linking.openURL(
+                    'https://sites.google.com/view/statussaverpro-termsconditions/home',
+                  )
+                }
+                style={styles.footerLink}
+              >
+                <Icon name="filetext1" size={14} color={theme.primary} />
+                <Text style={[styles.footerLinkText, { color: theme.primary }]}>
+                  Terms & Conditions
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <Text style={[styles.footerText, { color: theme.textSecondary }]}>
               Made with ❤️ by Vaishnav
             </Text>
             <Text style={[styles.disclaimer, { color: theme.textSecondary }]}>
-              This is an independent app.
+              Status Saver Pro is a third-party app and not connected to
+              WhatsApp in any way.
             </Text>
           </View>
         </View>
@@ -280,6 +318,26 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     paddingVertical: 20,
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  footerLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  footerLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  footerDivider: {
+    fontSize: 12,
+    opacity: 0.5,
   },
   footerText: {
     fontSize: 14,
