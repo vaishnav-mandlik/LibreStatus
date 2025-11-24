@@ -590,6 +590,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         data={filteredStatuses}
         renderItem={renderItem}
         keyExtractor={item => item.id}
+        extraData={statuses}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.row}
