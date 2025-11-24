@@ -85,6 +85,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const [statusLoading, setStatusLoading] = useState(false);
   const [savedLoading, setSavedLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusFile | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [savingId, setSavingId] = useState<string | null>(null);
   const savedStatusesRef = useRef<StatusFile[]>(savedStatuses);
   const savedIdsRef = useRef<Set<string>>(new Set());
@@ -350,7 +351,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   }, [loadStatuses, loadSavedStatuses, activeTab]);
 
   const handleSave = useCallback(
-    async (status: StatusFile) => {
+    async (status: StatusFile): Promise<boolean> => {
       setSavingId(status.id);
       try {
         const success = await saveStatusToGallery(status);
@@ -377,12 +378,14 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
           // Reload saved statuses from gallery to sync
           await loadSavedStatuses(true);
+          return true;
         } else {
           showMessage({
             title: 'Failed to save',
             message: 'Please try again after a moment.',
             type: 'error',
           });
+          return false;
         }
       } catch (error) {
         console.error('Error saving status:', error);
@@ -391,6 +394,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           message: 'Please try again after a moment.',
           type: 'error',
         });
+        return false;
       } finally {
         setSavingId(null);
       }
@@ -407,6 +411,25 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     });
   }, [activeTab, savedStatuses, statuses, mediaFilter]);
 
+  useEffect(() => {
+    if (!selectedStatus) {
+      return;
+    }
+
+    const nextIndex = filteredStatuses.findIndex(
+      status => status.id === selectedStatus.id,
+    );
+
+    if (nextIndex === -1) {
+      setSelectedStatus(null);
+      return;
+    }
+
+    if (nextIndex !== selectedIndex) {
+      setSelectedIndex(nextIndex);
+    }
+  }, [filteredStatuses, selectedIndex, selectedStatus]);
+
   const listLoading = activeTab === 'saved' ? savedLoading : statusLoading;
 
   const formatTime = (timestamp: number) => {
@@ -419,12 +442,17 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   };
 
+  const handleStatusPress = useCallback((status: StatusFile, index: number) => {
+    setSelectedStatus(status);
+    setSelectedIndex(index);
+  }, []);
+
   const renderItem = useCallback(
-    ({ item }: { item: StatusFile }) => (
+    ({ item, index }: { item: StatusFile; index: number }) => (
       <View style={styles.card}>
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => setSelectedStatus(item)}
+          onPress={() => handleStatusPress(item, index)}
           style={styles.cardPressable}
         >
           <Image source={{ uri: item.uri }} style={styles.cardImage} />
@@ -473,8 +501,15 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         </TouchableOpacity>
       </View>
     ),
-    [handleSave, savingId, theme],
+    [handleSave, handleStatusPress, savingId, theme],
   );
+
+  const handleViewerClose = useCallback(() => {
+    setSelectedStatus(null);
+    setSelectedIndex(0);
+  }, []);
+
+  const viewerVisible = selectedStatus !== null && filteredStatuses.length > 0;
 
   if (filteredStatuses.length === 0 && !listLoading && !refreshing) {
     return (
@@ -528,15 +563,12 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         }
       />
       <StatusViewer
-        visible={selectedStatus !== null}
-        status={selectedStatus}
-        onClose={() => setSelectedStatus(null)}
-        onSave={async () => {
-          if (selectedStatus) {
-            await handleSave(selectedStatus);
-          }
-        }}
-        isSaving={savingId === selectedStatus?.id}
+        visible={viewerVisible}
+        statuses={filteredStatuses}
+        initialIndex={selectedIndex}
+        savingId={savingId}
+        onClose={handleViewerClose}
+        onSave={handleSave}
       />
     </View>
   );

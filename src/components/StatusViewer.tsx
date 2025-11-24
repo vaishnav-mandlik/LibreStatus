@@ -18,14 +18,25 @@ import {
   Platform,
   StatusBar,
   Linking,
+  Dimensions,
+  FlatList,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
+import type {
+  GestureResponderEvent,
+  LayoutChangeEvent,
+  ListRenderItemInfo,
 } from 'react-native';
 import Video from 'react-native-video';
+import type { OnLoadData, OnProgressData } from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
-import type { OnLoadData, OnProgressData } from 'react-native-video';
 import type { StatusFile } from '../types';
 import { useFeedback, FeedbackProvider } from '../context/FeedbackContext';
+
+const SCREEN = Dimensions.get('window');
+const SCREEN_WIDTH = SCREEN.width;
 
 const formatPlaybackTime = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -89,65 +100,73 @@ const formatDateTime = (timestamp: number): string => {
 
 interface StatusViewerProps {
   visible: boolean;
-  status: StatusFile | null;
+  statuses: StatusFile[];
+  initialIndex: number;
+  savingId?: string | null;
   onClose: () => void;
-  onSave: () => Promise<void>;
-  isSaving?: boolean;
+  onSave: (status: StatusFile) => Promise<boolean>;
 }
 
 const StatusViewer: React.FC<StatusViewerProps> = ({
   visible,
-  status,
+  statuses,
+  initialIndex,
+  savingId,
   onClose,
   onSave,
-  isSaving,
 }) => {
-  if (!status) {
+  if (!visible || statuses.length === 0) {
     return null;
   }
 
   return (
     <Modal
       visible={visible}
-      transparent={true}
+      transparent={false}
       animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent={true}
     >
       <FeedbackProvider>
         <StatusViewerContent
-          status={status}
+          statuses={statuses}
+          initialIndex={initialIndex}
+          savingId={savingId}
           visible={visible}
           onClose={onClose}
           onSave={onSave}
-          isSaving={isSaving}
         />
       </FeedbackProvider>
     </Modal>
   );
 };
 
-const StatusViewerContent: React.FC<StatusViewerProps> = ({
-  status,
+interface StatusViewerContentProps
+  extends Omit<StatusViewerProps, 'visible'> {
+  visible: boolean;
+}
+
+const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
+  statuses,
+  initialIndex,
+  savingId,
   visible,
   onClose,
   onSave,
-  isSaving,
 }) => {
   const { showMessage } = useFeedback();
+  const flatListRef = useRef<FlatList<StatusFile>>(null);
   const videoRef = useRef<any>(null);
   const progressBarWidth = useRef(0);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
-
-  // Track if this status is saved locally for immediate UI feedback
   const [localIsSaved, setLocalIsSaved] = useState(false);
 
-  useEffect(() => {
-    setLocalIsSaved(status?.isSaved ?? false);
-  }, [status]);
+  const currentStatus = statuses[currentIndex];
 
   useEffect(() => {
     StatusBar.setHidden(visible, 'fade');
@@ -157,57 +176,90 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
   }, [visible]);
 
   useEffect(() => {
-    if (!status) {
-      setIsPlaying(false);
-      setDuration(0);
-      setCurrentTime(0);
-      setIsBuffering(false);
-      setLocalIsSaved(false);
+    if (!visible || statuses.length === 0) {
       return;
     }
 
-    setIsPlaying(status.type === 'video');
+    const safeIndex = Math.min(
+      Math.max(initialIndex, 0),
+      Math.max(statuses.length - 1, 0),
+    );
+    setCurrentIndex(safeIndex);
+    const targetStatus = statuses[safeIndex];
+    setLocalIsSaved(targetStatus?.isSaved ?? false);
     setDuration(0);
     setCurrentTime(0);
     setIsBuffering(false);
-    setLocalIsSaved(status.isSaved ?? false);
-  }, [status]);
+    setIsPlaying(targetStatus?.type === 'video');
 
-  const handleSaveClick = useCallback(async () => {
-    if (!localIsSaved && !isSaving) {
-      setLocalIsSaved(true);
-      await onSave();
+    const timer = requestAnimationFrame(() => {
+      flatListRef.current?.scrollToIndex({ index: safeIndex, animated: false });
+    });
+
+    return () => cancelAnimationFrame(timer);
+  }, [initialIndex, statuses, visible]);
+
+  useEffect(() => {
+    if (!currentStatus) {
+      return;
     }
-  }, [localIsSaved, isSaving, onSave]);
+
+    setLocalIsSaved(currentStatus.isSaved ?? false);
+    setDuration(0);
+    setCurrentTime(0);
+    setIsBuffering(false);
+    setIsPlaying(currentStatus.type === 'video');
+  }, [currentStatus]);
+
+  const isSavingCurrent = useMemo(() => {
+    if (!currentStatus || !savingId) {
+      return false;
+    }
+    return savingId === currentStatus.id;
+  }, [currentStatus, savingId]);
 
   const playbackProgress = useMemo(() => {
     if (duration <= 0) {
       return 0;
     }
+
     const ratio = currentTime / duration;
     return Math.min(Math.max(ratio, 0), 1);
   }, [currentTime, duration]);
 
   const metaInfo = useMemo(() => {
-    if (!status) {
+    if (!currentStatus) {
       return { date: '', size: '—' };
     }
 
     return {
-      date: formatDateTime(status.timestamp),
-      size: formatBytes(status.size),
+      date: formatDateTime(currentStatus.timestamp),
+      size: formatBytes(currentStatus.size),
     };
-  }, [status]);
+  }, [currentStatus]);
+
+  const handleSaveClick = useCallback(async () => {
+    if (!currentStatus || localIsSaved || isSavingCurrent) {
+      return;
+    }
+
+    const success = await onSave(currentStatus);
+    if (success) {
+      setLocalIsSaved(true);
+    } else {
+      setLocalIsSaved(currentStatus.isSaved ?? false);
+    }
+  }, [currentStatus, localIsSaved, isSavingCurrent, onSave]);
 
   const handleShare = useCallback(async () => {
-    if (!status) {
+    if (!currentStatus) {
       return;
     }
 
     try {
       await Share.share({
         message: 'Check out this status!',
-        url: status.uri,
+        url: currentStatus.uri,
         title: 'Share Status',
       });
     } catch {
@@ -217,10 +269,10 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
         type: 'error',
       });
     }
-  }, [showMessage, status]);
+  }, [currentStatus, showMessage]);
 
   const handleRepost = useCallback(async () => {
-    if (!status) {
+    if (!currentStatus) {
       return;
     }
 
@@ -238,7 +290,7 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
       }
 
       await Share.share({
-        url: status.uri,
+        url: currentStatus.uri,
         message:
           'Sharing this status — tap My Status inside WhatsApp to repost.',
         title: 'Share to WhatsApp',
@@ -250,31 +302,52 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
         type: 'error',
       });
     }
-  }, [showMessage, status]);
+  }, [currentStatus, showMessage]);
 
   const handleTogglePlayback = useCallback(() => {
-    if (status?.type !== 'video') {
+    if (currentStatus?.type !== 'video') {
       return;
     }
 
     setIsPlaying(prev => !prev);
-  }, [status]);
+  }, [currentStatus]);
 
-  const handleVideoLoad = useCallback((data: OnLoadData) => {
-    setDuration(data.duration);
-    setIsPlaying(true);
-    setIsBuffering(false);
-  }, []);
+  const handleVideoLoad = useCallback(
+    (index: number, data: OnLoadData) => {
+      if (index !== currentIndex) {
+        return;
+      }
 
-  const handleVideoProgress = useCallback((data: OnProgressData) => {
-    setCurrentTime(data.currentTime);
-  }, []);
+      setDuration(data.duration);
+      setIsPlaying(true);
+      setIsBuffering(false);
+    },
+    [currentIndex],
+  );
 
-  const handleVideoEnd = useCallback(() => {
-    videoRef.current?.seek(0);
-    setCurrentTime(0);
-    setIsPlaying(false);
-  }, []);
+  const handleVideoProgress = useCallback(
+    (index: number, data: OnProgressData) => {
+      if (index !== currentIndex) {
+        return;
+      }
+
+      setCurrentTime(data.currentTime);
+    },
+    [currentIndex],
+  );
+
+  const handleVideoEnd = useCallback(
+    (index: number) => {
+      if (index !== currentIndex) {
+        return;
+      }
+
+      videoRef.current?.seek(0);
+      setCurrentTime(0);
+      setIsPlaying(false);
+    },
+    [currentIndex],
+  );
 
   const handleProgressLayout = useCallback((event: LayoutChangeEvent) => {
     progressBarWidth.current = event.nativeEvent.layout.width;
@@ -294,54 +367,143 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
     [duration],
   );
 
-  if (!status) {
+  const handleMomentumScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const nextIndex = Math.round(offsetX / SCREEN_WIDTH);
+      if (!Number.isFinite(nextIndex)) {
+        return;
+      }
+
+      const clampedIndex = Math.min(
+        Math.max(nextIndex, 0),
+        Math.max(statuses.length - 1, 0),
+      );
+
+      if (clampedIndex !== currentIndex) {
+        setCurrentIndex(clampedIndex);
+      }
+    },
+    [currentIndex, statuses.length],
+  );
+
+  const getItemLayout = useCallback(
+    (_: ArrayLike<StatusFile> | null | undefined, index: number) => ({
+      length: SCREEN_WIDTH,
+      offset: SCREEN_WIDTH * index,
+      index,
+    }),
+    [],
+  );
+
+  const renderMedia = useCallback(
+    ({ item, index }: ListRenderItemInfo<StatusFile>) => {
+      const isActive = index === currentIndex;
+      const showVideoLayer = item.type === 'video';
+
+      return (
+        <View style={styles.mediaPagerItem}>
+          {item.type === 'image' ? (
+            <Image
+              source={{ uri: item.uri }}
+              style={styles.media}
+              resizeMode="contain"
+            />
+          ) : (
+            <>
+              <Video
+                ref={ref => {
+                  if (isActive) {
+                    videoRef.current = ref;
+                  } else if (videoRef.current === ref) {
+                    videoRef.current = null;
+                  }
+                }}
+                source={{ uri: item.uri }}
+                style={styles.media}
+                resizeMode="contain"
+                paused={!isActive || !isPlaying}
+                repeat={false}
+                controls={false}
+                playInBackground={false}
+                playWhenInactive={false}
+                onLoadStart={() => {
+                  if (isActive) {
+                    setIsBuffering(true);
+                  }
+                }}
+                onLoad={data => handleVideoLoad(index, data)}
+                onProgress={data => handleVideoProgress(index, data)}
+                onEnd={() => handleVideoEnd(index)}
+                onBuffer={({ isBuffering: buffering }) => {
+                  if (isActive) {
+                    setIsBuffering(buffering);
+                  }
+                }}
+              />
+              {showVideoLayer && isActive && isBuffering && (
+                <ActivityIndicator
+                  style={styles.bufferingIndicator}
+                  size="large"
+                  color="#FFFFFF"
+                />
+              )}
+              {showVideoLayer && isActive && !isPlaying && !isBuffering && (
+                <TouchableOpacity
+                  style={styles.centerPlayButton}
+                  onPress={handleTogglePlayback}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcon
+                    name="play"
+                    size={36}
+                    color="#000000"
+                  />
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </View>
+      );
+    },
+    [currentIndex, handleTogglePlayback, handleVideoEnd, handleVideoLoad, handleVideoProgress, isBuffering, isPlaying],
+  );
+
+  const handleScrollToIndexFailed = useCallback(() => {
+    requestAnimationFrame(() => {
+      flatListRef.current?.scrollToOffset({
+        offset: currentIndex * SCREEN_WIDTH,
+        animated: false,
+      });
+    });
+  }, [currentIndex]);
+
+  if (!currentStatus) {
     return null;
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.mediaContainer}>
-        {status.type === 'image' ? (
-          <Image
-            source={{ uri: status.uri }}
-            style={styles.media}
-            resizeMode="contain"
-          />
-        ) : (
-          <Video
-            ref={videoRef}
-            key={status.uri}
-            source={{ uri: status.uri }}
-            style={styles.media}
-            resizeMode="contain"
-            paused={!isPlaying}
-            repeat={false}
-            controls={false}
-            playInBackground={false}
-            playWhenInactive={false}
-            onLoadStart={() => setIsBuffering(true)}
-            onLoad={handleVideoLoad}
-            onProgress={handleVideoProgress}
-            onEnd={handleVideoEnd}
-            onBuffer={({ isBuffering: buffering }) => setIsBuffering(buffering)}
-          />
-        )}
-        {status.type === 'video' && isBuffering && (
-          <ActivityIndicator
-            style={styles.bufferingIndicator}
-            size="large"
-            color="#FFFFFF"
-          />
-        )}
-        {status.type === 'video' && !isPlaying && !isBuffering && (
-          <TouchableOpacity
-            style={styles.centerPlayButton}
-            onPress={handleTogglePlayback}
-            activeOpacity={0.8}
-          >
-            <MaterialCommunityIcon name="play" size={36} color="#000000" />
-          </TouchableOpacity>
-        )}
+      <View style={styles.mediaPagerContainer}>
+        <FlatList
+          ref={flatListRef}
+          data={statuses}
+          renderItem={renderMedia}
+          keyExtractor={item => item.id}
+          horizontal={true}
+          pagingEnabled={true}
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          getItemLayout={getItemLayout}
+          initialScrollIndex={Math.min(
+            Math.max(initialIndex, 0),
+            Math.max(statuses.length - 1, 0),
+          )}
+          onScrollToIndexFailed={handleScrollToIndexFailed}
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          extraData={currentIndex}
+          style={styles.mediaPager}
+        />
       </View>
 
       <LinearGradient
@@ -382,7 +544,7 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
         </View>
       </LinearGradient>
 
-      {status.type === 'video' && (
+      {currentStatus.type === 'video' && (
         <LinearGradient
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']}
           style={styles.videoControlsBar}
@@ -432,13 +594,13 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
         <TouchableOpacity
           style={[
             styles.actionBubble,
-            (isSaving || localIsSaved) && styles.actionBubbleDisabled,
+            (isSavingCurrent || localIsSaved) && styles.actionBubbleDisabled,
           ]}
           onPress={handleSaveClick}
-          disabled={isSaving || localIsSaved}
+          disabled={isSavingCurrent || localIsSaved}
           activeOpacity={0.8}
         >
-          {isSaving ? (
+          {isSavingCurrent ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : localIsSaved ? (
             <MaterialCommunityIcon name="check" size={22} color="#FFFFFF" />
@@ -450,7 +612,7 @@ const StatusViewerContent: React.FC<StatusViewerProps> = ({
             />
           )}
           <Text style={styles.actionBubbleLabel} numberOfLines={1}>
-            {isSaving ? 'Saving…' : localIsSaved ? 'Saved' : 'Download'}
+            {isSavingCurrent ? 'Saving…' : localIsSaved ? 'Saved' : 'Download'}
           </Text>
         </TouchableOpacity>
 
@@ -489,13 +651,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#040507',
   },
-  mediaContainer: {
+  mediaPagerContainer: {
+    flex: 1,
+  },
+  mediaPager: {
+    flexGrow: 0,
+    backgroundColor: '#040507',
+  },
+  mediaPagerItem: {
+    width: SCREEN_WIDTH,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#040507',
   },
   media: {
-    width: '100%',
+    width: SCREEN_WIDTH,
     height: '100%',
   },
   bufferingIndicator: {
@@ -546,13 +717,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  filename: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.25,
   },
   metaInfo: {
     flex: 1,
