@@ -48,7 +48,7 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ onClose }) => {
             <Icon name="mobile1" size={28} color="#fff" />
           </View>
           <Text style={[styles.heroTitle, { color: theme.text }]}>
-            Status Downloader
+            Status Saver Pro
           </Text>
           <Text style={[styles.heroVersion, { color: theme.textSecondary }]}>
             Version 1.0.0

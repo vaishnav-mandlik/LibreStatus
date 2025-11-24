@@ -13,7 +13,6 @@ import {
   StyleSheet,
   Text,
   ActivityIndicator,
-  Share,
   Pressable,
   Platform,
   StatusBar,
@@ -28,12 +27,85 @@ import type {
   LayoutChangeEvent,
   ListRenderItemInfo,
 } from 'react-native';
+import Share from 'react-native-share';
+import RNFS from 'react-native-fs';
 import Video from 'react-native-video';
 import type { OnLoadData, OnProgressData } from 'react-native-video';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import type { StatusFile } from '../types';
 import { useFeedback, FeedbackProvider } from '../context/FeedbackContext';
+
+const MIME_MAP: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  heic: 'image/heic',
+  bmp: 'image/bmp',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  mkv: 'video/x-matroska',
+  avi: 'video/x-msvideo',
+  webm: 'video/webm',
+  flv: 'video/x-flv',
+  '3gp': 'video/3gpp',
+};
+
+const resolveMimeType = (status: StatusFile): string => {
+  const parts = status.filename.split('.');
+  const ext = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+  if (ext && MIME_MAP[ext]) {
+    return MIME_MAP[ext];
+  }
+
+  return status.type === 'image' ? 'image/*' : 'video/*';
+};
+
+const SHARE_CACHE_DIR = `${RNFS.CachesDirectoryPath}/status-share`;
+
+const sanitizeFilename = (filename: string, fallbackExt: string): string => {
+  const base = filename || `status-${Date.now()}.${fallbackExt}`;
+  const safe = base.replace(/[^a-zA-Z0-9._-]/g, '_');
+  if (safe.includes('.')) {
+    return safe;
+  }
+  return `${safe}.${fallbackExt}`;
+};
+
+const ensureShareableFile = async (
+  status: StatusFile,
+): Promise<{ uri: string; filename: string; mime: string }> => {
+  const sourcePath = status.uri.startsWith('file://')
+    ? status.uri.replace('file://', '')
+    : status.uri;
+
+  const mime = resolveMimeType(status);
+  const nameParts = status.filename.split('.');
+  const ext =
+    nameParts.length > 1
+      ? nameParts[nameParts.length - 1].toLowerCase()
+      : status.type === 'image'
+        ? 'jpg'
+        : 'mp4';
+  const safeName = sanitizeFilename(status.filename, ext);
+  const cachePath = `${SHARE_CACHE_DIR}/${safeName}`;
+
+  const cacheDirExists = await RNFS.exists(SHARE_CACHE_DIR);
+  if (!cacheDirExists) {
+    await RNFS.mkdir(SHARE_CACHE_DIR);
+  }
+
+  if (sourcePath !== cachePath) {
+    const alreadyCached = await RNFS.exists(cachePath);
+    if (!alreadyCached) {
+      await RNFS.copyFile(sourcePath, cachePath);
+    }
+  }
+
+  return { uri: `file://${cachePath}`, filename: safeName, mime };
+};
 import { useLanguage } from '../context/LanguageContext';
 
 const SCREEN = Dimensions.get('window');
@@ -267,17 +339,34 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
     }
 
     try {
-      await Share.share({
-        message: t('viewer.shareMessage'),
-        url: currentStatus.uri,
+      const { uri: fileUri, filename, mime } = await ensureShareableFile(
+        currentStatus,
+      );
+
+      const shareOptions: any = {
         title: t('viewer.shareTitle'),
-      });
-    } catch {
-      showMessage({
-        title: t('viewer.shareFailedTitle'),
-        message: t('viewer.shareFailedMessage'),
-        type: 'error',
-      });
+        url: fileUri,
+        type: mime,
+        failOnCancel: false,
+        filename,
+      };
+
+      if (Platform.OS === 'android') {
+        shareOptions.message = t('viewer.shareMessage');
+      }
+
+      await Share.open(shareOptions);
+    } catch (error: any) {
+      console.log('Share error:', error);
+      // User cancelled or error occurred
+      const message = error?.message ?? '';
+      if (message && !message.includes('User did not share') && !message.includes('cancelled')) {
+        showMessage({
+          title: t('viewer.shareFailedTitle'),
+          message: t('viewer.shareFailedMessage'),
+          type: 'error',
+        });
+      }
     }
   }, [currentStatus, showMessage, t]);
 
@@ -299,17 +388,35 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
         return;
       }
 
-      await Share.share({
-        url: currentStatus.uri,
-        message: t('viewer.repostMessage'),
+      const { uri: fileUri, filename, mime } = await ensureShareableFile(
+        currentStatus,
+      );
+
+      const shareOptions: any = {
         title: t('viewer.repostTitle'),
-      });
-    } catch {
-      showMessage({
-        title: t('viewer.shareFailedTitle'),
-        message: t('viewer.repostFailedMessage'),
-        type: 'error',
-      });
+        url: fileUri,
+        type: mime,
+        social: Share.Social.WHATSAPP,
+        failOnCancel: false,
+        filename,
+      };
+
+      if (Platform.OS === 'android') {
+        shareOptions.message = t('viewer.repostMessage');
+      }
+
+      await Share.shareSingle(shareOptions);
+    } catch (error: any) {
+      console.log('Repost error:', error);
+      // User cancelled or error occurred
+      const message = error?.message ?? '';
+      if (message && !message.includes('User did not share') && !message.includes('cancelled')) {
+        showMessage({
+          title: t('viewer.shareFailedTitle'),
+          message: t('viewer.repostFailedMessage'),
+          type: 'error',
+        });
+      }
     }
   }, [currentStatus, showMessage, t]);
 
