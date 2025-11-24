@@ -15,12 +15,14 @@ import {
   Platform,
   Image,
   Dimensions,
+  DeviceEventEmitter,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { StatusFile } from '../types';
 import StatusViewer from '../components/StatusViewer';
+import PermissionGuideModal from '../components/PermissionGuideModal';
 import {
   getStatusFiles,
   saveStatusToGallery,
@@ -37,6 +39,12 @@ import { useFeedback } from '../context/FeedbackContext';
 
 const statusCache = new Map<string, StatusFile[]>();
 const savedCache = new Map<string, StatusFile[]>();
+
+const safPermissionState: { grantedUri: string | null } = {
+  grantedUri: null,
+};
+
+const SAF_PERMISSION_GRANTED_EVENT = 'saf-permission-granted';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -87,6 +95,11 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<StatusFile | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [showPermissionGuide, setShowPermissionGuide] = useState(false);
+  const isAwaitingPermission = useRef(false);
+  const loadStatusesRef = useRef<((force?: boolean) => Promise<void>) | null>(
+    null,
+  );
   const savedStatusesRef = useRef<StatusFile[]>(savedStatuses);
   const savedIdsRef = useRef<Set<string>>(new Set());
   const hasCompletedInitialLoad = useRef(false);
@@ -198,6 +211,11 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         return;
       }
 
+      // Don't reload if we're waiting for user to grant permission
+      if (isAwaitingPermission.current) {
+        return;
+      }
+
       if (!force) {
         const cached = statusCache.get(cacheKey);
         if (cached && cached.length > 0) {
@@ -213,71 +231,30 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setStatusLoading(true);
 
         let files: StatusFile[] = [];
+        const isPrimaryInstance = mediaFilter === 'images';
 
         if (Platform.OS === 'android' && Platform.Version >= 30) {
-          const safUri = await hasFolderAccess(type);
+          let safUri = await hasFolderAccess(type);
+
+          if (safUri) {
+            safPermissionState.grantedUri = safUri;
+          } else if (safPermissionState.grantedUri) {
+            safUri = safPermissionState.grantedUri;
+          }
 
           if (!safUri) {
             statusLoadingRef.current = false;
             setStatusLoading(false);
-            const openPicker = () => {
-              statusLoadingRef.current = true;
-              setStatusLoading(true);
-              (async () => {
-                const uri = await requestFolderAccess(type);
-                if (uri) {
-                  const grantedFiles = await getStatusFiles(type);
-                  console.log(`📊 Loaded ${grantedFiles.length} status files`);
-                  const filesWithSavedState = markSavedStatuses(grantedFiles);
-                  setStatuses(filesWithSavedState);
-                  statusCache.set(cacheKey, filesWithSavedState);
-                }
-                statusLoadingRef.current = false;
-                setStatusLoading(false);
-              })().catch(error => {
-                console.error('❌ Error requesting folder access:', error);
-                statusLoadingRef.current = false;
-                setStatusLoading(false);
-                showMessage({
-                  title: 'Something went wrong',
-                  message: 'Unable to open folder picker. Please try again.',
-                  type: 'error',
-                });
-              });
-            };
 
-            showMessage({
-              title: 'Select WhatsApp Status Folder',
-              message:
-                `You'll now select the ${
-                  type === 'business' ? 'WhatsApp Business' : 'WhatsApp'
-                } status folder.\n\n` +
-                'The folder picker will open near the correct location.\n\n' +
-                '📝 Steps:\n' +
-                '1. Look for ".Statuses" folder\n' +
-                '2. If not visible, navigate up to find:\n' +
-                `   Android → media → com.${
-                  type === 'business' ? 'whatsapp.w4b' : 'whatsapp'
-                }\n` +
-                '   → WhatsApp → Media → .Statuses\n' +
-                '3. Tap "Use this folder" at the bottom\n\n' +
-                'This grants access to view statuses.',
-              type: 'info',
-              actions: [
-                {
-                  label: 'Cancel',
-                  variant: 'secondary',
-                  onPress: () => {
-                    statusLoadingRef.current = false;
-                    setStatusLoading(false);
-                  },
-                },
-                {
-                  label: 'Open Picker',
-                  onPress: openPicker,
-                },
-              ],
-            });
+            if (!isPrimaryInstance) {
+              return;
+            }
+
+            // Show permission guide modal and mark that we're waiting
+            if (!showPermissionGuide) {
+              isAwaitingPermission.current = true;
+              setShowPermissionGuide(true);
+            }
             return;
           }
 
@@ -316,8 +293,27 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setStatusLoading(false);
       }
     },
-    [cacheKey, markSavedStatuses, showMessage, type],
+    [cacheKey, markSavedStatuses, mediaFilter, showMessage, showPermissionGuide, type],
   );
+
+  useEffect(() => {
+    loadStatusesRef.current = loadStatuses;
+  }, [loadStatuses]);
+
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      SAF_PERMISSION_GRANTED_EVENT,
+      (payload: { type: 'whatsapp' | 'business'; uri: string }) => {
+        if (payload?.type === type && loadStatusesRef.current) {
+          loadStatusesRef.current(true);
+        }
+      },
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [type]);
 
   useEffect(() => {
     const force = hasCompletedInitialLoad.current;
@@ -509,26 +505,73 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     setSelectedIndex(0);
   }, []);
 
+  const handlePermissionGuideContinue = useCallback(() => {
+    setShowPermissionGuide(false);
+    statusLoadingRef.current = true;
+    setStatusLoading(true);
+
+    (async () => {
+      try {
+        const uri = await requestFolderAccess(type);
+        if (uri) {
+          safPermissionState.grantedUri = uri;
+          isAwaitingPermission.current = false;
+          DeviceEventEmitter.emit(SAF_PERMISSION_GRANTED_EVENT, {
+            type,
+            uri,
+          });
+          if (loadStatusesRef.current) {
+            await loadStatusesRef.current(true);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error requesting folder access:', error);
+        showMessage({
+          title: 'Something went wrong',
+          message: 'Unable to open folder picker. Please try again.',
+          type: 'error',
+        });
+      } finally {
+        isAwaitingPermission.current = false;
+        statusLoadingRef.current = false;
+        setStatusLoading(false);
+      }
+    })();
+  }, [type, showMessage]);
+
+  const handlePermissionGuideCancel = useCallback(() => {
+    isAwaitingPermission.current = false;
+    setShowPermissionGuide(false);
+  }, []);
+
   const viewerVisible = selectedStatus !== null && filteredStatuses.length > 0;
 
   if (filteredStatuses.length === 0 && !listLoading && !refreshing) {
     return (
-      <View
-        style={[styles.emptyContainer, { backgroundColor: theme.background }]}
-      >
-        <Icon
-          name="inbox"
-          size={64}
-          color={theme.textSecondary}
-          style={styles.emptyIcon}
+      <>
+        <View
+          style={[styles.emptyContainer, { backgroundColor: theme.background }]}
+        >
+          <Icon
+            name="inbox"
+            size={64}
+            color={theme.textSecondary}
+            style={styles.emptyIcon}
+          />
+          <Text style={[styles.emptyText, { color: theme.text }]}>
+            No {mediaFilter} found
+          </Text>
+          <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
+            Pull down to refresh or view someone's status on WhatsApp
+          </Text>
+        </View>
+        <PermissionGuideModal
+          visible={showPermissionGuide}
+          type={type}
+          onContinue={handlePermissionGuideContinue}
+          onCancel={handlePermissionGuideCancel}
         />
-        <Text style={[styles.emptyText, { color: theme.text }]}>
-          No {mediaFilter} found
-        </Text>
-        <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>
-          Pull down to refresh or view someone's status on WhatsApp
-        </Text>
-      </View>
+      </>
     );
   }
 
@@ -569,6 +612,12 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         savingId={savingId}
         onClose={handleViewerClose}
         onSave={handleSave}
+      />
+      <PermissionGuideModal
+        visible={showPermissionGuide}
+        type={type}
+        onContinue={handlePermissionGuideContinue}
+        onCancel={handlePermissionGuideCancel}
       />
     </View>
   );
