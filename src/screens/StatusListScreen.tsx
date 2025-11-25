@@ -111,10 +111,16 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
 
   const markSavedStatuses = useCallback((files: StatusFile[]) => {
-    return files.map(file => ({
-      ...file,
-      isSaved: savedIdsRef.current.has(file.id),
-    }));
+    return files.map(file => {
+      // Check if file is saved by matching the filename
+      const isSaved =
+        savedIdsRef.current.has(file.id) ||
+        savedIdsRef.current.has(file.filename);
+      return {
+        ...file,
+        isSaved,
+      };
+    });
   }, []);
 
   useEffect(() => {

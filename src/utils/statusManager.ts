@@ -228,15 +228,30 @@ export const syncSavedStatusIds = async (): Promise<string[]> => {
   try {
     const savedIds = await getSavedStatusIds();
     const galleryFiles = await getSavedStatusFiles();
-    const galleryFileIds = new Set(galleryFiles.map(f => f.id));
+
+    // Create a set of filenames from gallery for efficient lookup
+    const galleryFilenames = new Set(
+      galleryFiles.map(f => f.filename?.toLowerCase()).filter(Boolean),
+    );
 
     // Filter out IDs that don't exist in gallery anymore
     const validIds = savedIds.filter(id => {
-      // Check if this ID exists in gallery files
-      // The ID might be the filename or URI, so check both
-      return galleryFiles.some(
-        file => file.id === id || file.filename === id || file.uri.includes(id),
-      );
+      // The ID is the filename from the status file
+      const idLower = id.toLowerCase();
+
+      // Check if this filename exists in gallery
+      if (galleryFilenames.has(idLower)) {
+        return true;
+      }
+
+      // Also check if any gallery file's URI contains this ID
+      // (in case the filename is embedded in the URI)
+      return galleryFiles.some(file => {
+        const filenameLower = file.filename?.toLowerCase();
+        return (
+          filenameLower === idLower || file.uri.toLowerCase().includes(idLower)
+        );
+      });
     });
 
     // Update AsyncStorage with synced IDs
@@ -376,7 +391,8 @@ export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
         node.type === 'video' || filename.toLowerCase().endsWith('.mp4');
 
       return {
-        id: uri,
+        // Use filename as ID to match with saved status IDs from AsyncStorage
+        id: filename,
         uri: uri,
         filename: filename,
         type: isVideo ? 'video' : 'image',
