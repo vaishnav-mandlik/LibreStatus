@@ -112,7 +112,7 @@ export const getStatusFiles = async (
       const safUri = await hasFolderAccess(type);
       if (safUri) {
         console.log('📁 Using SAF to access files');
-        const safFiles = await listFolderFiles(safUri);
+        const safFiles = await listFolderFiles(safUri, type);
 
         if (safFiles.length > 0) {
           return safFiles.map((file: any) => ({

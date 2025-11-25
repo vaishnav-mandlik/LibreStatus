@@ -540,13 +540,28 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             await loadStatusesRef.current(true);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error requesting folder access:', error);
-        showMessage({
-          title: t('status.errorPermissionTitle'),
-          message: t('status.errorPermissionMessage'),
-          type: 'error',
-        });
+        
+        // Show appropriate error message
+        if (error.code !== 'CANCELLED') {
+          const errorMessage = error.message?.includes('Invalid folder') 
+            ? 'The selected folder does not contain a .Statuses folder. Please select Android/media or a folder containing WhatsApp status files.'
+            : t('status.errorPermissionMessage');
+          
+          showMessage({
+            title: t('status.errorPermissionTitle'),
+            message: errorMessage,
+            type: 'error',
+          });
+          
+          // If invalid folder, show the permission guide again after a delay
+          if (error.message?.includes('Invalid folder')) {
+            setTimeout(() => {
+              setShowPermissionGuide(true);
+            }, 2500);
+          }
+        }
       } finally {
         isAwaitingPermission.current = false;
         statusLoadingRef.current = false;

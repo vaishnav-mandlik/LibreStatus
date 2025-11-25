@@ -28,17 +28,34 @@ export const requestFolderAccess = async (
       type === 'business' ? 'com.whatsapp.w4b' : 'com.whatsapp';
     const uri = await FolderPicker.pickFolder(packageName);
     if (uri) {
-      // Save the URI for future use
-      await AsyncStorage.setItem(`${SAF_URI_KEY}_${type}`, uri);
-      console.log('✅ Folder URI saved:', uri);
-      return uri;
+      // Validate the URI by trying to list files
+      try {
+        const files = await FolderPicker.listFiles(uri);
+        console.log(`✅ Validated folder with ${files.length} files`);
+        
+        // Save the URI if we can successfully call listFiles (even if 0 files)
+        // The folder structure is valid if listFiles doesn't throw an error
+        await AsyncStorage.setItem(`${SAF_URI_KEY}_${type}`, uri);
+        console.log('✅ Folder URI saved:', uri);
+        return uri;
+      } catch (listError: any) {
+        console.error('❌ Selected folder is invalid:', listError.message);
+        // Only reject if the error indicates no .Statuses folder was found
+        if (listError.message?.includes('Status folder not found')) {
+          throw new Error('Invalid folder selected. Please select a folder containing WhatsApp status files (.Statuses folder).');
+        }
+        // For other errors, still save the URI and let it retry later
+        await AsyncStorage.setItem(`${SAF_URI_KEY}_${type}`, uri);
+        console.log('⚠️ Folder URI saved despite error (will retry later):', uri);
+        return uri;
+      }
     }
     return null;
   } catch (error: any) {
     if (error.code !== 'CANCELLED') {
       console.error('❌ Error requesting folder access:', error);
     }
-    return null;
+    throw error;
   }
 };
 
@@ -64,7 +81,10 @@ export const hasFolderAccess = async (
 /**
  * List all files in the granted folder
  */
-export const listFolderFiles = async (uri: string): Promise<FolderFile[]> => {
+export const listFolderFiles = async (
+  uri: string,
+  type?: 'whatsapp' | 'business'
+): Promise<FolderFile[]> => {
   try {
     if (!FolderPicker) {
       return [];
@@ -73,8 +93,16 @@ export const listFolderFiles = async (uri: string): Promise<FolderFile[]> => {
     const files = await FolderPicker.listFiles(uri);
     console.log('📊 Files found via SAF:', files.length);
     return files;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error listing folder files:', error);
+    
+    // Only clear the URI if the folder is completely inaccessible or doesn't exist
+    // Don't clear if it's just that .Statuses folder is not found (user might need to select again)
+    if (type && (error.message?.includes('no longer accessible') || error.message?.includes('Folder not found'))) {
+      console.log('🗑️ Clearing inaccessible folder URI');
+      await clearFolderAccess(type);
+    }
+    
     return [];
   }
 };

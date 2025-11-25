@@ -115,7 +115,7 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
             DocumentFile statusFolder = findStatusFolder(pickedDir);
             
             if (statusFolder == null || !statusFolder.exists()) {
-                promise.reject("ERROR", "Status folder not found. Please grant access to the media folder.");
+                promise.reject("ERROR", "Status folder not found. Please select the Android/media folder containing WhatsApp.");
                 return;
             }
 
@@ -148,39 +148,68 @@ public class FolderPickerModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private DocumentFile findStatusFolder(DocumentFile mediaDir) {
+    private DocumentFile findStatusFolder(DocumentFile rootDir) {
         try {
-            // Try to find WhatsApp or WhatsApp Business folder
-            DocumentFile[] mediaDirs = mediaDir.listFiles();
-            
-            for (DocumentFile dir : mediaDirs) {
-                if (dir.isDirectory()) {
-                    String name = dir.getName();
-                    // Look for com.whatsapp or com.whatsapp.w4b folders
-                    if (name != null && (name.equals("com.whatsapp") || name.equals("com.whatsapp.w4b"))) {
-                        // Navigate to WhatsApp/Media/.Statuses
-                        DocumentFile whatsappDir = dir.findFile("WhatsApp");
-                        if (whatsappDir != null && whatsappDir.isDirectory()) {
-                            DocumentFile mediaFolder = whatsappDir.findFile("Media");
-                            if (mediaFolder != null && mediaFolder.isDirectory()) {
-                                DocumentFile statusFolder = mediaFolder.findFile(".Statuses");
-                                if (statusFolder != null && statusFolder.isDirectory()) {
-                                    return statusFolder;
-                                }
-                            }
-                        }
-                    }
-                }
+            // First, check if the granted folder itself is already the .Statuses folder
+            String dirName = rootDir.getName();
+            if (dirName != null && dirName.equals(".Statuses")) {
+                android.util.Log.d("FolderPicker", "Root folder is .Statuses");
+                return rootDir;
             }
             
-            // If not found in expected location, check if the granted folder itself is already the status folder
-            String dirName = mediaDir.getName();
-            if (dirName != null && dirName.equals(".Statuses")) {
-                return mediaDir;
+            // Check if .Statuses exists directly in this folder
+            DocumentFile directStatus = rootDir.findFile(".Statuses");
+            if (directStatus != null && directStatus.isDirectory()) {
+                android.util.Log.d("FolderPicker", "Found .Statuses directly in root");
+                return directStatus;
+            }
+            
+            // Recursively search for .Statuses folder
+            DocumentFile result = searchForStatusFolder(rootDir, 0, 4);
+            if (result != null) {
+                android.util.Log.d("FolderPicker", "Found .Statuses at: " + result.getUri());
+                return result;
             }
             
         } catch (Exception e) {
             android.util.Log.e("FolderPicker", "Error finding status folder: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    private DocumentFile searchForStatusFolder(DocumentFile dir, int depth, int maxDepth) {
+        if (depth > maxDepth || dir == null || !dir.isDirectory()) {
+            return null;
+        }
+        
+        try {
+            DocumentFile[] files = dir.listFiles();
+            if (files == null) {
+                return null;
+            }
+            
+            // First pass: check for .Statuses in current directory
+            for (DocumentFile file : files) {
+                if (file.isDirectory()) {
+                    String name = file.getName();
+                    if (name != null && name.equals(".Statuses")) {
+                        return file;
+                    }
+                }
+            }
+            
+            // Second pass: recursively search subdirectories
+            for (DocumentFile file : files) {
+                if (file.isDirectory()) {
+                    DocumentFile result = searchForStatusFolder(file, depth + 1, maxDepth);
+                    if (result != null) {
+                        return result;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            android.util.Log.e("FolderPicker", "Error searching folder at depth " + depth + ": " + e.getMessage());
         }
         
         return null;
