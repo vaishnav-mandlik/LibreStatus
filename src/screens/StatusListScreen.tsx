@@ -16,6 +16,7 @@ import {
   Image,
   Dimensions,
   DeviceEventEmitter,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -587,12 +588,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       <View
         style={[styles.emptyContainer, { backgroundColor: theme.background }]}
       >
-        <MaterialIcon
-          name="sync"
-          size={48}
-          color={theme.textSecondary}
-          style={styles.loadingIcon}
-        />
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }

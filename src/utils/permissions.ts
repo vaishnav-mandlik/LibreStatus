@@ -60,13 +60,11 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       return true;
     }
 
-
     if (androidVersion >= 33) {
       // Android 13+ - Request media permissions
 
       const imageResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
       const videoResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
-
 
       const granted =
         imageResult === RESULTS.GRANTED && videoResult === RESULTS.GRANTED;
