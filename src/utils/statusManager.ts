@@ -34,7 +34,6 @@ export const findStatusFolder = async (): Promise<StatusFolder | null> => {
     return null;
   }
 
-
   for (const path of WHATSAPP_STATUS_PATHS) {
     try {
       const exists = await RNFS.exists(path);
@@ -61,7 +60,6 @@ export const findBusinessStatusFolder =
     if (Platform.OS !== 'android') {
       return null;
     }
-
 
     for (const path of WHATSAPP_BUSINESS_PATHS) {
       try {
@@ -90,7 +88,6 @@ export const getStatusFiles = async (
   type: 'whatsapp' | 'business' = 'whatsapp',
 ): Promise<StatusFile[]> => {
   try {
-
     // For Android 11+, try SAF first
     if (Platform.OS === 'android' && Platform.Version >= 30) {
       const safUri = await hasFolderAccess(type);
@@ -133,7 +130,6 @@ export const getStatusFiles = async (
     const statusFiles: StatusFile[] = [];
 
     for (const file of files) {
-
       if (file.name === '.nomedia' || file.name.startsWith('.')) {
         continue;
       }
@@ -276,12 +272,10 @@ export const saveStatusToGallery = async (
   statusFile: StatusFile,
 ): Promise<boolean> => {
   try {
-
     let uriToSave = statusFile.uri;
 
     // If it's a content URI (from SAF), we need to copy it to a temp location first
     if (statusFile.uri.startsWith('content://')) {
-
       const tempDir = `${RNFS.CachesDirectoryPath}/statuses`;
       const tempFilePath = `${tempDir}/${statusFile.filename}`;
 
@@ -336,14 +330,12 @@ export const saveStatusToGallery = async (
  */
 export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
   try {
-
     const photos = await CameraRoll.getPhotos({
       first: 1000,
       assetType: 'All',
       groupName: 'Status',
       include: ['filename', 'fileSize', 'imageSize'],
     });
-
 
     const statusFiles: StatusFile[] = photos.edges.map((edge, index) => {
       const node = edge.node;

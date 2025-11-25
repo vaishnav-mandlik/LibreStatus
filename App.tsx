@@ -243,6 +243,10 @@ function AppContent() {
 
   useEffect(() => {
     const onBackPress = () => {
+      if (activeTab === 'about' || activeTab === 'help') {
+        setActiveTab('settings');
+        return true;
+      }
       if (activeTab === 'settings') {
         setActiveTab(lastPrimaryTabRef.current);
         return true;
