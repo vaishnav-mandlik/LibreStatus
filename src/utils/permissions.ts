@@ -41,7 +41,7 @@ export const checkStoragePermission = async (): Promise<boolean> => {
       );
       return hasPermission;
     }
-  } catch (err) {
+  } catch {
     return false;
   }
 };
@@ -129,7 +129,7 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       // Android 5 and below - Permissions granted at install time
       return true;
     }
-  } catch (err) {
+  } catch {
     return false;
   }
 };

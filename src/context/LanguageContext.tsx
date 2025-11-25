@@ -81,7 +81,7 @@ const getDeviceLanguage = (): LanguageCode => {
 
     // Default to English for all other languages
     return 'en';
-  } catch (error) {
+  } catch {
     return 'en';
   }
 };

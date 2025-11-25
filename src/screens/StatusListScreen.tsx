@@ -111,9 +111,10 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(() => {
     // If we have cached data, we're not in initial load state
-    const cached = activeTab === 'saved' 
-      ? savedCache.get(savedCacheKey)
-      : statusCache.get(cacheKey);
+    const cached =
+      activeTab === 'saved'
+        ? savedCache.get(savedCacheKey)
+        : statusCache.get(cacheKey);
     return !cached || cached.length === 0;
   });
 
@@ -144,6 +145,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         const cached = savedCache.get(savedCacheKey);
         if (cached && cached.length > 0) {
           setSavedStatuses(cached);
+          setIsInitialLoad(false);
           return;
         }
       }
@@ -235,6 +237,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
           const filesWithSavedState = markSavedStatuses(cached);
           setStatuses(filesWithSavedState);
           statusCache.set(cacheKey, filesWithSavedState);
+          setIsInitialLoad(false);
           return;
         }
       }
@@ -581,7 +584,9 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   if (isInitialLoad || (listLoading && filteredStatuses.length === 0)) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.emptyContainer, { backgroundColor: theme.background }]}
+      >
         <MaterialIcon
           name="sync"
           size={48}
