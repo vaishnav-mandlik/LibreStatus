@@ -1,13 +1,17 @@
 {
   "name": "whatsappstatus",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "build:android:release": "cd android && ./gradlew assembleRelease",
+    "build:android:bundle": "cd android && ./gradlew bundleRelease",
+    "build:android:clean": "cd android && ./gradlew clean",
+    "build:ios:release": "cd ios && xcodebuild -workspace whatsappstatus.xcworkspace -scheme whatsappstatus -configuration Release clean archive"
   },
   "dependencies": {
     "@ant-design/react-native": "^5.4.3",

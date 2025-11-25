@@ -42,7 +42,6 @@ export const checkStoragePermission = async (): Promise<boolean> => {
       return hasPermission;
     }
   } catch (err) {
-    console.warn('❌ Permission check error:', err);
     return false;
   }
 };
@@ -54,25 +53,20 @@ export const requestStoragePermission = async (): Promise<boolean> => {
 
   try {
     const androidVersion = Platform.Version;
-    console.log(`🤖 Android version: ${androidVersion}`);
 
     // First check if we already have permission
     const hasPermission = await checkStoragePermission();
     if (hasPermission) {
-      console.log('✅ Permissions already granted');
       return true;
     }
 
-    console.log('📋 Requesting permissions...');
 
     if (androidVersion >= 33) {
       // Android 13+ - Request media permissions
-      console.log('📯 Android 13+: Requesting media permissions...');
 
       const imageResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
       const videoResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
 
-      console.log(`Images: ${imageResult}, Videos: ${videoResult}`);
 
       const granted =
         imageResult === RESULTS.GRANTED && videoResult === RESULTS.GRANTED;
@@ -87,7 +81,6 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       return granted;
     } else if (androidVersion >= 30) {
       // Android 11-12 - Need special "All files access" permission
-      console.log('📂 Android 11+: Need All Files Access...');
 
       showFeedback({
         title: 'Files Access Required',
@@ -112,7 +105,6 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       return false;
     } else if (androidVersion >= 23) {
       // Android 6-10 - Request storage permissions
-      console.log('📂 Android 6-10: Requesting storage permissions...');
 
       const readResult = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
@@ -126,14 +118,11 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       );
 
       if (readResult === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('✅ Storage permission granted');
         return true;
       } else if (readResult === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-        console.log('⚠️ Permission permanently denied');
         showSettingsAlert();
         return false;
       } else {
-        console.log('❌ Storage permission denied');
         return false;
       }
     } else {
@@ -141,7 +130,6 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       return true;
     }
   } catch (err) {
-    console.warn('❌ Permission error:', err);
     return false;
   }
 };

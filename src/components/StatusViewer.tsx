@@ -359,7 +359,6 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
 
       await Share.open(shareOptions);
     } catch (error: any) {
-      console.log('Share error:', error);
       // User cancelled or error occurred
       const message = error?.message ?? '';
       if (
@@ -415,7 +414,6 @@ const StatusViewerContent: React.FC<StatusViewerContentProps> = ({
 
       await Share.shareSingle(shareOptions);
     } catch (error: any) {
-      console.log('Repost error:', error);
       // User cancelled or error occurred
       const message = error?.message ?? '';
       if (

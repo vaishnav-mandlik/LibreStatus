@@ -35,6 +35,12 @@ local.properties
 !debug.keystore
 .kotlin/
 
+# Release signing configuration (NEVER commit these!)
+keystore.properties
+release.keystore
+*.jks
+*.p12
+
 # node.js
 #
 node_modules/

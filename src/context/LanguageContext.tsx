@@ -82,7 +82,6 @@ const getDeviceLanguage = (): LanguageCode => {
     // Default to English for all other languages
     return 'en';
   } catch (error) {
-    console.log('Error detecting device language, defaulting to English');
     return 'en';
   }
 };
@@ -806,7 +805,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
           setLanguageState(deviceLang);
           // Save the detected language
           await AsyncStorage.setItem(STORAGE_KEY, deviceLang);
-          console.log(`Auto-detected language: ${deviceLang}`);
         }
       } catch {
         // On error, default to English

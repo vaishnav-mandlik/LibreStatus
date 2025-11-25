@@ -34,33 +34,25 @@ export const findStatusFolder = async (): Promise<StatusFolder | null> => {
     return null;
   }
 
-  console.log('🔍 Searching for WhatsApp status folder...');
-  console.log('📂 External Storage Path:', RNFS.ExternalStorageDirectoryPath);
 
   for (const path of WHATSAPP_STATUS_PATHS) {
     try {
-      console.log(`Checking path: ${path}`);
       const exists = await RNFS.exists(path);
-      console.log(`Path exists: ${exists}`);
 
       if (exists) {
         // Check if we can read the directory
         try {
-          const files = await RNFS.readDir(path);
-          console.log(`✅ Found WhatsApp status folder: ${path}`);
-          console.log(`📄 Files found: ${files.length}`);
+          await RNFS.readDir(path);
           return { path, exists: true };
-        } catch (readError) {
-          console.log(`⚠️ Cannot read directory ${path}:`, readError);
+        } catch {
           continue;
         }
       }
-    } catch (error) {
-      console.log(`❌ Error checking path ${path}:`, error);
+    } catch {
+      // Ignore path check errors
     }
   }
 
-  console.log('❌ No WhatsApp status folder found');
   return null;
 };
 
@@ -70,31 +62,24 @@ export const findBusinessStatusFolder =
       return null;
     }
 
-    console.log('🔍 Searching for WhatsApp Business status folder...');
 
     for (const path of WHATSAPP_BUSINESS_PATHS) {
       try {
-        console.log(`Checking path: ${path}`);
         const exists = await RNFS.exists(path);
-        console.log(`Path exists: ${exists}`);
 
         if (exists) {
           try {
-            const files = await RNFS.readDir(path);
-            console.log(`✅ Found Business status folder: ${path}`);
-            console.log(`📄 Files found: ${files.length}`);
+            await RNFS.readDir(path);
             return { path, exists: true };
-          } catch (readError) {
-            console.log(`⚠️ Cannot read directory ${path}:`, readError);
+          } catch {
             continue;
           }
         }
-      } catch (error) {
-        console.log(`❌ Error checking path ${path}:`, error);
+      } catch {
+        // Ignore path check errors
       }
     }
 
-    console.log('❌ No Business status folder found');
     return null;
   };
 
@@ -105,13 +90,11 @@ export const getStatusFiles = async (
   type: 'whatsapp' | 'business' = 'whatsapp',
 ): Promise<StatusFile[]> => {
   try {
-    console.log(`🔍 Getting status files for ${type}...`);
 
     // For Android 11+, try SAF first
     if (Platform.OS === 'android' && Platform.Version >= 30) {
       const safUri = await hasFolderAccess(type);
       if (safUri) {
-        console.log('📁 Using SAF to access files');
         const safFiles = await listFolderFiles(safUri, type);
 
         if (safFiles.length > 0) {
@@ -132,34 +115,24 @@ export const getStatusFiles = async (
     }
 
     // Fallback to legacy file system access
-    console.log('📂 Using file system access');
     const statusFolder =
       type === 'business'
         ? await findBusinessStatusFolder()
         : await findStatusFolder();
 
     if (!statusFolder) {
-      console.log('❌ Status folder not found');
       return [];
     }
 
-    console.log(`📂 Reading files from: ${statusFolder.path}`);
     const files = await RNFS.readDir(statusFolder.path);
-    console.log(`📊 Total files in directory: ${files.length}`);
 
     if (files.length === 0) {
-      console.log('⚠️ Directory is empty');
       return [];
     }
 
     const statusFiles: StatusFile[] = [];
 
     for (const file of files) {
-      console.log(
-        `🔍 Processing: ${file.name}, isFile: ${file.isFile()}, size: ${
-          file.size
-        }`,
-      );
 
       if (file.name === '.nomedia' || file.name.startsWith('.')) {
         continue;
@@ -199,7 +172,6 @@ export const getStatusFiles = async (
       }
     }
 
-    console.log(`\n✅ Total valid statuses found: ${statusFiles.length}`);
     return statusFiles.sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
     console.error('❌ Error reading status files:', error);
@@ -260,7 +232,6 @@ export const syncSavedStatusIds = async (): Promise<string[]> => {
         SAVED_STATUS_IDS_KEY,
         JSON.stringify(validIds),
       );
-      console.log(`Synced saved IDs: ${savedIds.length} -> ${validIds.length}`);
     }
 
     return validIds;
@@ -305,14 +276,11 @@ export const saveStatusToGallery = async (
   statusFile: StatusFile,
 ): Promise<boolean> => {
   try {
-    console.log(`💾 Saving to gallery: ${statusFile.filename}`);
-    console.log(`📍 URI: ${statusFile.uri}`);
 
     let uriToSave = statusFile.uri;
 
     // If it's a content URI (from SAF), we need to copy it to a temp location first
     if (statusFile.uri.startsWith('content://')) {
-      console.log('📋 Detected content URI, copying to temp location...');
 
       const tempDir = `${RNFS.CachesDirectoryPath}/statuses`;
       const tempFilePath = `${tempDir}/${statusFile.filename}`;
@@ -331,7 +299,6 @@ export const saveStatusToGallery = async (
         await RNFS.writeFile(tempFilePath, fileContent, 'base64');
 
         uriToSave = 'file://' + tempFilePath;
-        console.log(`✅ Copied to temp: ${tempFilePath}`);
       } catch (copyError) {
         console.error('❌ Error copying file:', copyError);
         return false;
@@ -339,7 +306,6 @@ export const saveStatusToGallery = async (
     }
 
     // Save to gallery in Status album
-    console.log(`💾 Saving to CameraRoll: ${uriToSave}`);
     await CameraRoll.save(uriToSave, {
       type: statusFile.type === 'video' ? 'video' : 'photo',
       album: 'Status',
@@ -353,13 +319,11 @@ export const saveStatusToGallery = async (
       const tempPath = uriToSave.replace('file://', '');
       try {
         await RNFS.unlink(tempPath);
-        console.log('🗑️ Cleaned up temp file');
-      } catch (cleanupError) {
-        console.log('⚠️ Could not clean up temp file:', cleanupError);
+      } catch {
+        // Ignore cleanup errors
       }
     }
 
-    console.log('✅ Successfully saved to gallery');
     return true;
   } catch (error) {
     console.error('❌ Error saving to gallery:', error);
@@ -372,7 +336,6 @@ export const saveStatusToGallery = async (
  */
 export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
   try {
-    console.log('📱 Loading saved statuses from gallery...');
 
     const photos = await CameraRoll.getPhotos({
       first: 1000,
@@ -381,7 +344,6 @@ export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
       include: ['filename', 'fileSize', 'imageSize'],
     });
 
-    console.log(`📊 Found ${photos.edges.length} saved files in Status album`);
 
     const statusFiles: StatusFile[] = photos.edges.map((edge, index) => {
       const node = edge.node;

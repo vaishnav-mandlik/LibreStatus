@@ -144,11 +144,9 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       try {
         savedLoadingRef.current = true;
         setSavedLoading(true);
-        console.log('📱 Loading saved statuses from gallery...');
         const saved = await getSavedStatusFiles();
         setSavedStatuses(saved);
         savedCache.set(savedCacheKey, saved);
-        console.log(`✅ Loaded ${saved.length} saved statuses from gallery`);
       } catch (error) {
         console.error('❌ Error loading saved statuses:', error);
       } finally {
@@ -164,7 +162,6 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     const loadSavedIds = async () => {
       const savedIds = await syncSavedStatusIds();
       savedIdsRef.current = new Set(savedIds);
-      console.log(`Loaded ${savedIds.length} saved status IDs from storage`);
       // Update statuses with synced saved state
       if (statuses.length > 0) {
         const updated = markSavedStatuses(statuses);
@@ -266,9 +263,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             return;
           }
 
-          console.log('✅ SAF access granted, loading statuses...');
           files = await getStatusFiles(type);
-          console.log(`📊 Loaded ${files.length} status files`);
         } else {
           const hasPermission = await checkStoragePermission();
 
@@ -281,9 +276,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             }
           }
 
-          console.log('✅ Permission granted, loading statuses...');
           files = await getStatusFiles(type);
-          console.log(`📊 Loaded ${files.length} status files`);
         }
 
         const filesWithSavedState = markSavedStatuses(files);
@@ -542,19 +535,19 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         }
       } catch (error: any) {
         console.error('❌ Error requesting folder access:', error);
-        
+
         // Show appropriate error message
         if (error.code !== 'CANCELLED') {
-          const errorMessage = error.message?.includes('Invalid folder') 
+          const errorMessage = error.message?.includes('Invalid folder')
             ? 'The selected folder does not contain a .Statuses folder. Please select Android/media or a folder containing WhatsApp status files.'
             : t('status.errorPermissionMessage');
-          
+
           showMessage({
             title: t('status.errorPermissionTitle'),
             message: errorMessage,
             type: 'error',
           });
-          
+
           // If invalid folder, show the permission guide again after a delay
           if (error.message?.includes('Invalid folder')) {
             setTimeout(() => {
