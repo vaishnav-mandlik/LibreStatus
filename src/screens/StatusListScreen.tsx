@@ -109,6 +109,13 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
   const statusLoadingRef = useRef(false);
   const savedLoadingRef = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(() => {
+    // If we have cached data, we're not in initial load state
+    const cached = activeTab === 'saved' 
+      ? savedCache.get(savedCacheKey)
+      : statusCache.get(cacheKey);
+    return !cached || cached.length === 0;
+  });
 
   const markSavedStatuses = useCallback((files: StatusFile[]) => {
     return files.map(file => {
@@ -152,6 +159,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       } finally {
         savedLoadingRef.current = false;
         setSavedLoading(false);
+        setIsInitialLoad(false);
       }
     },
     [savedCacheKey],
@@ -292,6 +300,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
       } finally {
         statusLoadingRef.current = false;
         setStatusLoading(false);
+        setIsInitialLoad(false);
       }
     },
     [
@@ -570,6 +579,19 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const viewerVisible = selectedStatus !== null && filteredStatuses.length > 0;
 
+  if (isInitialLoad || (listLoading && filteredStatuses.length === 0)) {
+    return (
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+        <MaterialIcon
+          name="sync"
+          size={48}
+          color={theme.textSecondary}
+          style={styles.loadingIcon}
+        />
+      </View>
+    );
+  }
+
   if (filteredStatuses.length === 0 && !listLoading && !refreshing) {
     return (
       <>
@@ -743,6 +765,9 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     marginBottom: 16,
+  },
+  loadingIcon: {
+    opacity: 0.6,
   },
   emptyText: {
     fontSize: 18,
