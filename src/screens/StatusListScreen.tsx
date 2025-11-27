@@ -121,10 +121,34 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const markSavedStatuses = useCallback((files: StatusFile[]) => {
     return files.map(file => {
-      // Check if file is saved by matching the filename
-      const isSaved =
-        savedIdsRef.current.has(file.id) ||
-        savedIdsRef.current.has(file.filename);
+      // Get base names for more flexible matching
+      const fileBaseName = file.filename.split('.').slice(0, -1).join('.');
+      const fileId = file.id;
+
+      // Check if file is saved by matching against saved IDs
+      const isSaved = Array.from(savedIdsRef.current).some(savedId => {
+        // Exact match on filename or ID
+        if (savedId === file.filename || savedId === fileId) {
+          return true;
+        }
+
+        // Match on base name (without extension)
+        if (savedId === fileBaseName) {
+          return true;
+        }
+
+        // Check if savedId is a base name that matches our file
+        const savedBaseName = savedId.split('.').slice(0, -1).join('.');
+        if (
+          savedBaseName &&
+          (savedBaseName === fileBaseName || savedBaseName === fileId)
+        ) {
+          return true;
+        }
+
+        return false;
+      });
+
       return {
         ...file,
         isSaved,
@@ -168,11 +192,13 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     [savedCacheKey],
   );
 
-  // Load and sync saved status IDs on mount
+  // Load and sync saved status IDs on mount and when activeTab changes
   useEffect(() => {
     const loadSavedIds = async () => {
       const savedIds = await syncSavedStatusIds();
       savedIdsRef.current = new Set(savedIds);
+      console.log('🔄 Synced saved IDs:', savedIds.length);
+
       // Update statuses with synced saved state
       if (statuses.length > 0) {
         const updated = markSavedStatuses(statuses);
@@ -182,32 +208,15 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
     };
     loadSavedIds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab]);
 
-  // Sync saved IDs when switching tabs or refreshing
+  // Reload saved statuses when on saved tab
   useEffect(() => {
-    if (activeTab === 'status') {
-      const syncIds = async () => {
-        const savedIds = await syncSavedStatusIds();
-        savedIdsRef.current = new Set(savedIds);
-        if (statuses.length > 0) {
-          const updated = markSavedStatuses(statuses);
-          setStatuses(updated);
-          statusCache.set(cacheKey, updated);
-        }
-      };
-      syncIds();
-    } else if (activeTab === 'saved') {
-      // Sync saved files when switching to saved tab
-      const syncSaved = async () => {
-        const savedIds = await syncSavedStatusIds();
-        savedIdsRef.current = new Set(savedIds);
-        await loadSavedStatuses(true);
-      };
-      syncSaved();
+    if (activeTab === 'saved') {
+      loadSavedStatuses(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, reloadSignal]);
+  }, [reloadSignal]);
 
   useEffect(() => {
     loadSavedStatuses();
@@ -370,20 +379,33 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
 
   const handleSave = useCallback(
     async (status: StatusFile): Promise<boolean> => {
+      // Don't save if already saved
+      if (status.isSaved) {
+        return false;
+      }
+
       setSavingId(status.id);
       try {
         const success = await saveStatusToGallery(status);
         if (success) {
-          // Sync saved IDs from AsyncStorage immediately
-          const savedIds = await syncSavedStatusIds();
-          savedIdsRef.current = new Set(savedIds);
+          console.log('✅ Saved successfully:', status.filename);
 
-          // Update status with saved flag immediately
-          const savedStatus = { ...status, isSaved: true };
+          // Add to saved IDs immediately
+          savedIdsRef.current.add(status.id);
+          savedIdsRef.current.add(status.filename);
+          const baseName = status.filename.split('.').slice(0, -1).join('.');
+          if (baseName) {
+            savedIdsRef.current.add(baseName);
+          }
+
+          // Update UI immediately with optimistic update
           setStatuses(prev => {
-            const updated = prev.map(s =>
-              s.id === status.id ? savedStatus : s,
-            );
+            const updated = prev.map(s => {
+              if (s.id === status.id) {
+                return { ...s, isSaved: true };
+              }
+              return s;
+            });
             statusCache.set(cacheKey, updated);
             return updated;
           });
@@ -394,8 +416,23 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
             type: 'success',
           });
 
-          // Reload saved statuses from gallery to sync
-          await loadSavedStatuses(true);
+          // Sync in background after a short delay to ensure file is in gallery
+          setTimeout(async () => {
+            console.log('🔄 Background sync starting...');
+            const savedIds = await syncSavedStatusIds();
+            savedIdsRef.current = new Set(savedIds);
+            console.log('🔄 Background sync complete:', savedIds.length, 'IDs');
+
+            // Re-mark all statuses with updated saved state
+            setStatuses(prev => {
+              const updated = markSavedStatuses(prev);
+              statusCache.set(cacheKey, updated);
+              return updated;
+            });
+
+            await loadSavedStatuses(true);
+          }, 1000);
+
           return true;
         } else {
           showMessage({
@@ -417,7 +454,7 @@ const StatusListScreen: React.FC<StatusListScreenProps> = ({
         setSavingId(null);
       }
     },
-    [showMessage, loadSavedStatuses, cacheKey, t],
+    [showMessage, loadSavedStatuses, cacheKey, t, markSavedStatuses],
   );
 
   const filteredStatuses = useMemo(() => {

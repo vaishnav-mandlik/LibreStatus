@@ -190,66 +190,80 @@ export const getSavedStatusIds = async (): Promise<string[]> => {
 
 /**
  * Sync saved status IDs with actual gallery files
- * Removes IDs for files that no longer exist in gallery
+ * Returns all IDs that exist in gallery
  */
 export const syncSavedStatusIds = async (): Promise<string[]> => {
   try {
-    const savedIds = await getSavedStatusIds();
     const galleryFiles = await getSavedStatusFiles();
 
-    // Create a set of filenames from gallery for efficient lookup
-    const galleryFilenames = new Set(
-      galleryFiles.map(f => f.filename?.toLowerCase()).filter(Boolean),
-    );
+    console.log('📂 Gallery files found:', galleryFiles.length);
 
-    // Filter out IDs that don't exist in gallery anymore
-    const validIds = savedIds.filter(id => {
-      // The ID is the filename from the status file
-      const idLower = id.toLowerCase();
+    // Extract all possible matching IDs from gallery files
+    const allGalleryIds = new Set<string>();
 
-      // Check if this filename exists in gallery
-      if (galleryFilenames.has(idLower)) {
-        return true;
+    galleryFiles.forEach(file => {
+      // Add the exact filename (most reliable)
+      if (file.filename) {
+        allGalleryIds.add(file.filename);
+
+        // Also extract base name without extension for matching
+        const parts = file.filename.split('.');
+        if (parts.length > 1) {
+          const baseName = parts.slice(0, -1).join('.');
+          allGalleryIds.add(baseName);
+        }
       }
 
-      // Also check if any gallery file's URI contains this ID
-      // (in case the filename is embedded in the URI)
-      return galleryFiles.some(file => {
-        const filenameLower = file.filename?.toLowerCase();
-        return (
-          filenameLower === idLower || file.uri.toLowerCase().includes(idLower)
-        );
-      });
+      // Add the ID
+      if (file.id && file.id !== file.filename) {
+        allGalleryIds.add(file.id);
+      }
     });
 
-    // Update AsyncStorage with synced IDs
-    if (validIds.length !== savedIds.length) {
-      await AsyncStorage.setItem(
-        SAVED_STATUS_IDS_KEY,
-        JSON.stringify(validIds),
-      );
-    }
+    const validIds = Array.from(allGalleryIds);
+
+    console.log('💾 Saving IDs to storage:', validIds.length);
+
+    // Update AsyncStorage with all valid IDs from gallery
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(validIds));
 
     return validIds;
   } catch (error) {
     console.error('Error syncing saved status IDs:', error);
-    return await getSavedStatusIds();
+    return [];
   }
 };
 
 /**
  * Add a status ID to saved list
  */
-export const addSavedStatusId = async (statusId: string): Promise<void> => {
+export const addSavedStatusId = async (
+  statusId: string,
+  filename?: string,
+): Promise<void> => {
   try {
     const savedIds = await getSavedStatusIds();
-    if (!savedIds.includes(statusId)) {
-      savedIds.push(statusId);
-      await AsyncStorage.setItem(
-        SAVED_STATUS_IDS_KEY,
-        JSON.stringify(savedIds),
-      );
+    const idsToAdd = new Set(savedIds);
+
+    // Add the status ID
+    idsToAdd.add(statusId);
+
+    // Add the filename
+    if (filename) {
+      idsToAdd.add(filename);
+
+      // Also add base name without extension
+      const parts = filename.split('.');
+      if (parts.length > 1) {
+        const baseName = parts.slice(0, -1).join('.');
+        idsToAdd.add(baseName);
+      }
     }
+
+    const finalIds = Array.from(idsToAdd);
+    console.log('💾 Adding to saved IDs:', finalIds);
+
+    await AsyncStorage.setItem(SAVED_STATUS_IDS_KEY, JSON.stringify(finalIds));
   } catch (error) {
     console.error('Error saving status ID:', error);
   }
@@ -305,8 +319,8 @@ export const saveStatusToGallery = async (
       album: 'Status',
     });
 
-    // Mark as saved in persistent storage
-    await addSavedStatusId(statusFile.id);
+    // Mark as saved in persistent storage with both ID and filename
+    await addSavedStatusId(statusFile.id, statusFile.filename);
 
     // Clean up temp file if we created one
     if (uriToSave !== statusFile.uri && uriToSave.startsWith('file://')) {
@@ -345,7 +359,7 @@ export const getSavedStatusFiles = async (): Promise<StatusFile[]> => {
         node.type === 'video' || filename.toLowerCase().endsWith('.mp4');
 
       return {
-        // Use filename as ID to match with saved status IDs from AsyncStorage
+        // Use filename as primary ID
         id: filename,
         uri: uri,
         filename: filename,
