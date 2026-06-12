@@ -1,7 +1,7 @@
 # LibreStatus
 
 A small, offline Android app for saving the WhatsApp statuses you've already
-viewed. No account, no ads, no trackers, and no internet permission — everything
+viewed. No account, no ads, no trackers, and no internet permission. Everything
 happens on your phone.
 
 WhatsApp statuses disappear after 24 hours. LibreStatus reads the statuses that
@@ -36,7 +36,7 @@ itself has already stored on your device.
 
 LibreStatus is built to need as little as possible:
 
-- No `INTERNET` permission — the app cannot send your data anywhere.
+- No `INTERNET` permission, so the app cannot send your data anywhere.
 - No analytics, no advertising IDs, no crash reporting.
 - No `MANAGE_EXTERNAL_STORAGE` ("All files access"). On Android 11+ it uses the
   Storage Access Framework so you choose exactly which folder it can read.

@@ -187,7 +187,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.aboutHelp': 'Help',
     'settings.shareAppAlertTitle': 'Share app',
     'settings.shareAppAlertMessage':
-      'Check out LibreStatus — save and share statuses easily!',
+      'Check out LibreStatus, save and share statuses easily!',
     'settings.versionLabel': 'Version 1.0.1',
     'settings.languageModalTitle': 'Choose a language',
     'settings.accessibility.close': 'Close settings',
