@@ -1,7 +1,20 @@
 import { Platform, PermissionsAndroid, Linking } from 'react-native';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-import RNFS from 'react-native-fs';
 import { showFeedback } from '../context/FeedbackContext';
+
+/**
+ * Storage permission strategy (Android only):
+ *
+ *  - Android 13+ (API 33+): scoped media read permissions (images/videos). These
+ *    back the gallery used by the "Saved" tab.
+ *  - Android 11-12 (API 30-32): access to WhatsApp's .Statuses folder is granted
+ *    through the Storage Access Framework folder picker (see folderPicker.ts), so
+ *    there is no broad runtime permission to request here.
+ *  - Android 6-10 (API 23-29): legacy READ_EXTERNAL_STORAGE to read the folder
+ *    directly.
+ *
+ * MANAGE_EXTERNAL_STORAGE ("All files access") is intentionally never requested.
+ */
 
 export const checkStoragePermission = async (): Promise<boolean> => {
   if (Platform.OS !== 'android') {
@@ -12,7 +25,7 @@ export const checkStoragePermission = async (): Promise<boolean> => {
     const androidVersion = Platform.Version;
 
     if (androidVersion >= 33) {
-      // Android 13+ - Check media permissions
+      // Android 13+ - media read permissions
       const imageCheck = await PermissionsAndroid.check(
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
       );
@@ -20,27 +33,17 @@ export const checkStoragePermission = async (): Promise<boolean> => {
         PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
       );
       return imageCheck && videoCheck;
-    } else if (androidVersion >= 30) {
-      // Android 11-12 - Need MANAGE_EXTERNAL_STORAGE to access other apps
-      // Check if we can read the WhatsApp directory
-      try {
-        const testPath = `${RNFS.ExternalStorageDirectoryPath}/Android/media/com.whatsapp`;
-        const exists = await RNFS.exists(testPath);
-        if (exists) {
-          const files = await RNFS.readDir(testPath);
-          return files.length >= 0; // If we can read, we have permission
-        }
-      } catch {
-        return false;
-      }
-      return false;
-    } else {
-      // Android 10 and below - Check storage permission
-      const hasPermission = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      );
-      return hasPermission;
     }
+
+    if (androidVersion >= 30) {
+      // Android 11-12 - handled by the SAF folder picker, nothing to check here.
+      return true;
+    }
+
+    // Android 6-10 - legacy storage permission
+    return await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+    );
   } catch {
     return false;
   }
@@ -61,8 +64,7 @@ export const requestStoragePermission = async (): Promise<boolean> => {
     }
 
     if (androidVersion >= 33) {
-      // Android 13+ - Request media permissions
-
+      // Android 13+ - request media read permissions
       const imageResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_IMAGES);
       const videoResult = await request(PERMISSIONS.ANDROID.READ_MEDIA_VIDEO);
 
@@ -77,33 +79,16 @@ export const requestStoragePermission = async (): Promise<boolean> => {
       }
 
       return granted;
-    } else if (androidVersion >= 30) {
-      // Android 11-12 - Need special "All files access" permission
+    }
 
-      showFeedback({
-        title: 'Files Access Required',
-        message:
-          'To view WhatsApp statuses, grant "All files access" when prompted in Settings.',
-        type: 'warning',
-        actions: [
-          {
-            label: 'Not now',
-            variant: 'secondary',
-            onPress: () => {},
-          },
-          {
-            label: 'Open Settings',
-            onPress: () => {
-              Linking.openSettings().catch(() => undefined);
-            },
-          },
-        ],
-      });
+    if (androidVersion >= 30) {
+      // Android 11-12 - access is granted through the SAF folder picker, which is
+      // driven from the status list screen. Nothing to request here.
+      return true;
+    }
 
-      return false;
-    } else if (androidVersion >= 23) {
-      // Android 6-10 - Request storage permissions
-
+    if (androidVersion >= 23) {
+      // Android 6-10 - request legacy storage permission
       const readResult = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
         {
@@ -117,16 +102,17 @@ export const requestStoragePermission = async (): Promise<boolean> => {
 
       if (readResult === PermissionsAndroid.RESULTS.GRANTED) {
         return true;
-      } else if (readResult === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-        showSettingsAlert();
-        return false;
-      } else {
-        return false;
       }
-    } else {
-      // Android 5 and below - Permissions granted at install time
-      return true;
+
+      if (readResult === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+        showSettingsAlert();
+      }
+
+      return false;
     }
+
+    // Android 5 and below - permissions granted at install time
+    return true;
   } catch {
     return false;
   }

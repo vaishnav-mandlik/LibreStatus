@@ -1,0 +1,15 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Development-only permissions.
+      INTERNET and cleartext traffic are required for the Metro dev server and
+      React Native debugging. They are NOT included in the release build.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        tools:targetApi="28"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>
