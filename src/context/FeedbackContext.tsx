@@ -112,11 +112,17 @@ export const FeedbackProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Multiple providers can be mounted at once (e.g. the root provider plus the
+    // one inside the StatusViewer modal). Save the previous handlers and restore
+    // them on unmount so a nested provider tearing down does not leave the
+    // imperative showFeedback() bridge pointing at nothing.
+    const previousShow = feedbackBridge.showMessage;
+    const previousDismiss = feedbackBridge.dismissMessage;
     feedbackBridge.showMessage = showMessage;
     feedbackBridge.dismissMessage = dismissMessage;
     return () => {
-      feedbackBridge.showMessage = undefined;
-      feedbackBridge.dismissMessage = undefined;
+      feedbackBridge.showMessage = previousShow;
+      feedbackBridge.dismissMessage = previousDismiss;
     };
   }, [dismissMessage, showMessage]);
 

@@ -77,6 +77,7 @@ const sanitizeFilename = (filename: string, fallbackExt: string): string => {
 const ensureShareableFile = async (
   status: StatusFile,
 ): Promise<{ uri: string; filename: string; mime: string }> => {
+  const isContentUri = status.uri.startsWith('content://');
   const sourcePath = status.uri.startsWith('file://')
     ? status.uri.replace('file://', '')
     : status.uri;
@@ -100,7 +101,15 @@ const ensureShareableFile = async (
   if (sourcePath !== cachePath) {
     const alreadyCached = await RNFS.exists(cachePath);
     if (!alreadyCached) {
-      await RNFS.copyFile(sourcePath, cachePath);
+      // RNFS.copyFile cannot read a content:// source (SAF, Android 11+), so we
+      // stream those through a base64 read/write. Plain file:// paths can be
+      // copied directly.
+      if (isContentUri) {
+        const data = await RNFS.readFile(status.uri, 'base64');
+        await RNFS.writeFile(cachePath, data, 'base64');
+      } else {
+        await RNFS.copyFile(sourcePath, cachePath);
+      }
     }
   }
 

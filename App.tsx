@@ -108,7 +108,10 @@ function AppContent() {
   }, [activeMedia]);
 
   useEffect(() => {
-    if (activeTab !== 'settings') {
+    // Only the two primary tabs are valid "return" targets. about/help/settings
+    // are secondary screens reached from settings, so we must not remember them
+    // here or backing out of settings would loop back into them.
+    if (activeTab === 'status' || activeTab === 'saved') {
       lastPrimaryTabRef.current = activeTab;
     }
   }, [activeTab]);
@@ -310,7 +313,7 @@ function AppContent() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
         {/* <View style={styles.header}>
-          <Text style={styles.headerTitle}>Status Saver Pro</Text>
+          <Text style={styles.headerTitle}>LibreStatus</Text>
           <View style={styles.headerIcons}>
             <TouchableOpacity style={styles.iconButton} onPress={openWhatsApp}>
               <Icon name="phone" size={20} color="#FFFFFF" />
