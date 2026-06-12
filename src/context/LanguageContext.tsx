@@ -186,8 +186,9 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.aboutShare': 'Share app',
     'settings.aboutHelp': 'Help',
     'settings.shareAppAlertTitle': 'Share app',
-    'settings.shareAppAlertMessage': 'Check out this amazing Status Saver app!',
-    'settings.versionLabel': 'Version 1.0.0',
+    'settings.shareAppAlertMessage':
+      'Check out LibreStatus — save and share statuses easily!',
+    'settings.versionLabel': 'Version 1.0.1',
     'settings.languageModalTitle': 'Choose a language',
     'settings.accessibility.close': 'Close settings',
     'settings.accessibility.changeTheme': 'Change theme',
@@ -263,7 +264,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'Compartir app',
     'settings.shareAppAlertMessage':
       '¡Mira esta increíble app para guardar estados!',
-    'settings.versionLabel': 'Versión 1.0.0',
+    'settings.versionLabel': 'Versión 1.0.1',
     'settings.languageModalTitle': 'Selecciona un idioma',
     'settings.accessibility.close': 'Cerrar ajustes',
     'settings.accessibility.changeTheme': 'Cambiar tema',
@@ -339,7 +340,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'Compartilhar app',
     'settings.shareAppAlertMessage':
       'Confira este incrível app para salvar status!',
-    'settings.versionLabel': 'Versão 1.0.0',
+    'settings.versionLabel': 'Versão 1.0.1',
     'settings.languageModalTitle': 'Escolha um idioma',
     'settings.accessibility.close': 'Fechar configurações',
     'settings.accessibility.changeTheme': 'Alterar tema',
@@ -417,7 +418,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'Поделиться приложением',
     'settings.shareAppAlertMessage':
       'Посмотрите это удивительное приложение для сохранения статусов!',
-    'settings.versionLabel': 'Версия 1.0.0',
+    'settings.versionLabel': 'Версия 1.0.1',
     'settings.languageModalTitle': 'Выберите язык',
     'settings.accessibility.close': 'Закрыть настройки',
     'settings.accessibility.changeTheme': 'Сменить тему',
@@ -493,7 +494,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': "Partager l'app",
     'settings.shareAppAlertMessage':
       'Découvrez cette application incroyable pour sauvegarder les statuts !',
-    'settings.versionLabel': 'Version 1.0.0',
+    'settings.versionLabel': 'Version 1.0.1',
     'settings.languageModalTitle': 'Choisissez une langue',
     'settings.accessibility.close': 'Fermer les réglages',
     'settings.accessibility.changeTheme': 'Changer le thème',
@@ -571,7 +572,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'App teilen',
     'settings.shareAppAlertMessage':
       'Schau dir diese fantastische App zum Speichern von Status an!',
-    'settings.versionLabel': 'Version 1.0.0',
+    'settings.versionLabel': 'Version 1.0.1',
     'settings.languageModalTitle': 'Sprache auswählen',
     'settings.accessibility.close': 'Einstellungen schließen',
     'settings.accessibility.changeTheme': 'Design ändern',
@@ -649,7 +650,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'Condividi app',
     'settings.shareAppAlertMessage':
       "Dai un'occhiata a questa fantastica app per salvare gli stati!",
-    'settings.versionLabel': 'Versione 1.0.0',
+    'settings.versionLabel': 'Versione 1.0.1',
     'settings.languageModalTitle': 'Scegli una lingua',
     'settings.accessibility.close': 'Chiudi impostazioni',
     'settings.accessibility.changeTheme': 'Cambia tema',
@@ -726,7 +727,7 @@ const TRANSLATIONS: Record<LanguageCode, TranslationDictionary> = {
     'settings.shareAppAlertTitle': 'App delen',
     'settings.shareAppAlertMessage':
       'Bekijk deze geweldige app om statussen op te slaan!',
-    'settings.versionLabel': 'Versie 1.0.0',
+    'settings.versionLabel': 'Versie 1.0.1',
     'settings.languageModalTitle': 'Kies een taal',
     'settings.accessibility.close': 'Instellingen sluiten',
     'settings.accessibility.changeTheme': 'Thema wijzigen',

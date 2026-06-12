@@ -1,4 +1,4 @@
-package com.vaishnavmandlik.statussaverpro;
+package com.vaishnavmandlik.librestatus;
 
 import android.app.Activity;
 import android.content.Intent;

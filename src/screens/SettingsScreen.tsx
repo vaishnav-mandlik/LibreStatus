@@ -83,11 +83,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleShareApp = useCallback(async () => {
     try {
-      const playStoreUrl =
-        'https://play.google.com/store/apps/details?id=com.vaishnavmandlik.statussaverpro';
+      const downloadUrl =
+        'https://f-droid.org/packages/com.vaishnavmandlik.librestatus/';
       const shareMessage = `${t(
         'settings.shareAppAlertMessage',
-      )}\n\n${playStoreUrl}`;
+      )}\n\n${downloadUrl}`;
 
       await Share.share({
         message: shareMessage,

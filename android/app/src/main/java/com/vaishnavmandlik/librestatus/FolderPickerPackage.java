@@ -1,4 +1,4 @@
-package com.vaishnavmandlik.statussaverpro;
+package com.vaishnavmandlik.librestatus;
 
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;

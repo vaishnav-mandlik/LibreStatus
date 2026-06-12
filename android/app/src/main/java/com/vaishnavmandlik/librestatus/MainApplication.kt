@@ -1,4 +1,4 @@
-package com.vaishnavmandlik.statussaverpro
+package com.vaishnavmandlik.librestatus
 
 import android.app.Application
 import com.facebook.react.PackageList

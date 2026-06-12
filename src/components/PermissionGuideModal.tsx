@@ -89,10 +89,10 @@ const PermissionGuideModal: React.FC<PermissionGuideModalProps> = ({
 
               <View style={innerDialogStyles}>
                 <Text style={dialogTitleStyles}>
-                  Allow Status Saver Pro to access files in media?
+                  Allow LibreStatus to access files in media?
                 </Text>
                 <Text style={dialogMessageStyles}>
-                  This will let Status Saver Pro access current and future
+                  This will let LibreStatus access current and future
                   content stored in media.
                 </Text>
 

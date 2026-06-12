@@ -2,14 +2,14 @@
 
 ## 🔐 Keystore Setup
 
-- [x] Generate release keystore (statussaverpro-release.keystore)
+- [x] Generate release keystore (librestatus-release.keystore)
 - [ ] Update android/keystore.properties with actual passwords
 - [ ] Keep keystore backup in safe location (NEVER lose this!)
 
 ## 📱 App Information
 
-- **App Name**: Status Saver Pro
-- **Package Name**: com.vaishnavmandlik.statussaverpro
+- **App Name**: LibreStatus
+- **Package Name**: com.vaishnavmandlik.librestatus
 - **Version Code**: 1
 - **Version Name**: 1.0.0
 
@@ -39,7 +39,7 @@ Since your app accesses photos/videos, you MUST provide a privacy policy.
 **Template**:
 
 ```
-Status Saver Pro - Privacy Policy
+LibreStatus - Privacy Policy
 
 This app allows users to save WhatsApp statuses to their device.
 We do not collect, store, or share any user data.
