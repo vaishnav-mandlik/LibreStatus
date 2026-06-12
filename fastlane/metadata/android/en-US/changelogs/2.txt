@@ -1,0 +1,6 @@
+First F-Droid release.
+
+* Offline-only: removed the internet permission and "All files access" permission
+* Android 11+ uses the system folder picker (Storage Access Framework)
+* Save statuses to the gallery, share and repost to WhatsApp
+* Light, dark and system themes; 8 languages

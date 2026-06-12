@@ -1,0 +1,33 @@
+LibreStatus lets you view and keep the photo and video statuses you see in
+WhatsApp, so a status you liked doesn't disappear after 24 hours.
+
+The app works entirely on your device. It has no internet permission, collects no
+data, contains no ads and no trackers.
+
+Features:
+
+* Browse the image and video statuses currently available on your device
+* Swipe between the Images and Videos tabs
+* Full-screen viewer with video playback and a scrubber
+* Save any status to your gallery with one tap
+* Re-share or repost a status to WhatsApp or any other app
+* "Saved" tab to revisit everything you have downloaded
+* Direct message a phone number on WhatsApp without saving the contact
+* Light, dark and system themes
+* Available in 8 languages (English, Spanish, Portuguese, Russian, French,
+  German, Italian, Dutch)
+
+How it works:
+
+1. Open WhatsApp and view someone's status.
+2. Open LibreStatus.
+3. On Android 11 and newer, grant access to the WhatsApp media folder once using
+   the system folder picker. On older versions, grant storage access.
+4. Tap any status to view it, then tap download to save it.
+
+Privacy:
+
+LibreStatus is a third-party app and is not affiliated with or endorsed by
+WhatsApp. It does not upload anything to any server. All processing happens
+locally on your phone. Please respect other people's privacy and content rights
+when saving and sharing statuses.
