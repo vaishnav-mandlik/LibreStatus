@@ -18,7 +18,7 @@ Builds:
     subdir: android/app
     sudo:
       - curl -Lo node.tar.gz https://nodejs.org/dist/v20.18.1/node-v20.18.1-linux-x64.tar.gz
-      - echo "PUT_SHA256_OF_THE_TARBALL_HERE  node.tar.gz" | sha256sum -c -
+      - echo "259e5a8bf2e15ecece65bd2a47153262eda71c0b2c9700d5e703ce4951572784  node.tar.gz" | sha256sum -c -
       - tar xzf node.tar.gz --strip-components=1 -C /usr/local
       - rm node.tar.gz
     init:
