@@ -18,7 +18,7 @@ Builds:
     subdir: android/app
     sudo:
       - apt-get update
-      - apt-get install -y npm
+      - apt-get install -y npm openjdk-17-jdk-headless
     init: npm ci
     gradle:
       - yes
