@@ -43,7 +43,6 @@ Builds:
       - node_modules/react-native/sdks/hermesc/win64-bin
       - node_modules/fb-dotslash/bin/macos
       - node_modules/fb-dotslash/bin/windows
-      - node_modules/fb-dotslash/bin/windows-arm64
       - node_modules/fb-dotslash/bin/linux-musl.aarch64
 
 AutoUpdateMode: Version
