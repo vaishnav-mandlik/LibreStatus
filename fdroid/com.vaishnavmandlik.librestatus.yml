@@ -14,7 +14,7 @@ Repo: https://github.com/vaishnav-mandlik/LibreStatus.git
 Builds:
   - versionName: 1.0.1
     versionCode: 2
-    commit: 1cb7e550b8a8b9fa25b43df02a27e73171b66089
+    commit: 4766eca01c13dbc0b3835ae78df66c0357c938a3
     subdir: android/app
     sudo:
       - apt-get update
@@ -56,5 +56,10 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
+VercodeOperation:
+  - 10 * %c + 1
+  - 10 * %c + 2
+  - 10 * %c + 3
+  - 10 * %c + 4
 CurrentVersion: 1.0.1
-CurrentVersionCode: 2
+CurrentVersionCode: 24
