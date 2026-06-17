@@ -19,12 +19,14 @@ Builds:
     sudo:
       - apt-get update
       - apt-get install -y npm
-      - curl -Lo /tmp/jdk17.tar.gz 
-        https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.19%2B10/OpenJDK17U-jdk_x64_linux_hotspot_17.0.19_10.tar.gz
-      - echo "d8afc263758141a66e0e3aafc321e783f7016696f4eaea067d340a269037d331  /tmp/jdk17.tar.gz"
-        | sha256sum -c -
-      - mkdir -p /usr/lib/jvm/java-17-openjdk-amd64
-      - tar xzf /tmp/jdk17.tar.gz --strip-components=1 -C /usr/lib/jvm/java-17-openjdk-amd64
+      - B=https://github.com/adoptium/temurin17-binaries/releases/download
+      - F=jdk-17.0.19%2B10/OpenJDK17U-jdk_x64_linux_hotspot_17.0.19_10.tar.gz
+      - J=/usr/lib/jvm/java-17-openjdk-amd64
+      - H=d8afc263758141a66e0e3aafc321e783f7016696f4eaea067d340a269037d331
+      - curl -Lo /tmp/jdk17.tar.gz "$B/$F"
+      - echo "$H  /tmp/jdk17.tar.gz" | sha256sum -c -
+      - mkdir -p "$J"
+      - tar xzf /tmp/jdk17.tar.gz --strip-components=1 -C "$J"
       - rm /tmp/jdk17.tar.gz
     init: npm ci
     gradle:
@@ -51,7 +53,6 @@ Builds:
       - node_modules/fb-dotslash/bin/macos
       - node_modules/fb-dotslash/bin/windows
       - node_modules/fb-dotslash/bin/linux-musl.aarch64
-
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 1.0.1
