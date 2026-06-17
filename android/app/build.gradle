@@ -102,10 +102,24 @@ android {
     splits {
         abi {
             reset()
-            // Enable ABI splits for APKs, create universal APK for easier testing
-            enable project.hasProperty('buildApk') ? true : false
-            universalApk true
+            // One APK per ABI (no universal APK) so each download is smaller.
+            enable true
+            universalApk false
             include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+    }
+
+    // Give each per-ABI APK a unique version code. The ABI digit goes in the
+    // lowest position so codes order as armeabi-v7a < arm64-v8a < x86 < x86_64,
+    // matching the VercodeOperation in the F-Droid metadata.
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def abiName = output.getFilter(com.android.build.OutputFile.ABI)
+            def abiVersionCodes = ["armeabi-v7a": 1, "arm64-v8a": 2, "x86": 3, "x86_64": 4]
+            def abiCode = abiVersionCodes.get(abiName)
+            if (abiCode != null) {
+                output.versionCodeOverride = variant.versionCode * 10 + abiCode
+            }
         }
     }
     signingConfigs {
