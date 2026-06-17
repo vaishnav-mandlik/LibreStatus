@@ -53,6 +53,7 @@ Builds:
       - node_modules/fb-dotslash/bin/macos
       - node_modules/fb-dotslash/bin/windows
       - node_modules/fb-dotslash/bin/linux-musl.aarch64
+
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 1.0.1
