@@ -1,12 +1,51 @@
+<div align="center">
+
+<img src="android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="96" alt="LibreStatus icon" />
+
 # LibreStatus
 
-A small, offline Android app for saving the WhatsApp statuses you've already
-viewed. No account, no ads, no trackers, and no internet permission. Everything
-happens on your phone.
+**View, save and share WhatsApp statuses, fully offline.**
 
-WhatsApp statuses disappear after 24 hours. LibreStatus reads the statuses that
-are already cached on your device after you view them, and lets you keep the ones
-you like.
+No account, no ads, no trackers, no internet permission. Everything happens on your phone.
+
+[![F-Droid](https://img.shields.io/f-droid/v/com.vaishnavmandlik.librestatus?logo=fdroid&label=F-Droid&color=1976D2)](https://f-droid.org/packages/com.vaishnavmandlik.librestatus/)
+[![GitHub release](https://img.shields.io/github/v/release/vaishnav-mandlik/LibreStatus?logo=github&label=APK&color=00A884)](https://github.com/vaishnav-mandlik/LibreStatus/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/vaishnav-mandlik/LibreStatus/total?color=00A884)](https://github.com/vaishnav-mandlik/LibreStatus/releases)
+[![License: MIT](https://img.shields.io/github/license/vaishnav-mandlik/LibreStatus?color=6F6F6F)](LICENSE)
+
+</div>
+
+---
+
+## Download
+
+<div align="center">
+
+<a href="https://f-droid.org/packages/com.vaishnavmandlik.librestatus/">
+  <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70" />
+</a>
+<a href="https://github.com/vaishnav-mandlik/LibreStatus/releases/latest">
+  <img src="https://raw.githubusercontent.com/andOTP/andOTP/master/assets/badges/get-it-on-github.png" alt="Get it on GitHub" height="70" />
+</a>
+
+</div>
+
+- **F-Droid:** [f-droid.org/packages/com.vaishnavmandlik.librestatus](https://f-droid.org/packages/com.vaishnavmandlik.librestatus/)
+- **Direct APK:** [LibreStatus-1.0.1.apk](https://github.com/vaishnav-mandlik/LibreStatus/releases/download/1.0.1/LibreStatus-1.0.1.apk) (latest on the [releases page](https://github.com/vaishnav-mandlik/LibreStatus/releases/latest))
+
+> WhatsApp statuses disappear after 24 hours. LibreStatus reads the statuses that
+> are already cached on your device after you view them, and lets you keep the ones
+> you like.
+
+## Screenshots
+
+<div align="center">
+
+| Statuses | Saved | Full-screen viewer | Settings |
+| :---: | :---: | :---: | :---: |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" width="200" alt="Status grid" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" width="200" alt="Saved tab" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" width="200" alt="Full-screen viewer" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" width="200" alt="Settings" /> |
+
+</div>
 
 ## Features
 
@@ -90,3 +129,5 @@ LibreStatus is an independent, third-party app. It is not affiliated with,
 endorsed by, or connected to WhatsApp or Meta. WhatsApp is a trademark of its
 respective owner. Please respect other people's privacy and content rights when
 saving and sharing statuses.
+</content>
+</invoke>
