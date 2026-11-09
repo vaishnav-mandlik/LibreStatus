@@ -141,7 +141,7 @@ Builds:
 
   - versionName: 1.1.0
     versionCode: 31
-    commit: 1.1.0
+    commit: 3a6b8c9bb0f9f5a7f7dd07b1013642e8af8e7e83
     subdir: android/app
     sudo:
       - apt-get update
@@ -171,7 +171,7 @@ Builds:
 
   - versionName: 1.1.0
     versionCode: 32
-    commit: 1.1.0
+    commit: 3a6b8c9bb0f9f5a7f7dd07b1013642e8af8e7e83
     subdir: android/app
     sudo:
       - apt-get update
@@ -201,7 +201,7 @@ Builds:
 
   - versionName: 1.1.0
     versionCode: 33
-    commit: 1.1.0
+    commit: 3a6b8c9bb0f9f5a7f7dd07b1013642e8af8e7e83
     subdir: android/app
     sudo:
       - apt-get update
@@ -231,7 +231,7 @@ Builds:
 
   - versionName: 1.1.0
     versionCode: 34
-    commit: 1.1.0
+    commit: 3a6b8c9bb0f9f5a7f7dd07b1013642e8af8e7e83
     subdir: android/app
     sudo:
       - apt-get update
