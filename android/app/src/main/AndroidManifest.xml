@@ -3,37 +3,105 @@
 
     <!--
       Storage access strategy (Android-only app):
-      - Android 10 and below: legacy READ_EXTERNAL_STORAGE to read WhatsApp's .Statuses folder directly.
-      - Android 11+: the Storage Access Framework folder picker (no broad storage permission needed).
-      - Android 13+: scoped media read permissions, used by the gallery (saved tab) and pickers.
-      MANAGE_EXTERNAL_STORAGE ("All files access") is intentionally NOT requested.
+      - Android 10 and below: legacy READ_EXTERNAL_STORAGE to read the status
+        folder directly, plus WRITE on 9 and below to create the save album.
+      - Android 11+: the Storage Access Framework folder picker grants read
+        access to one folder, and NO storage or media permission is declared.
+
+      There is deliberately no READ_MEDIA_IMAGES / READ_MEDIA_VIDEO. The app
+      reads and deletes exactly one thing in the gallery — the copies it wrote
+      itself — and MediaStore gives an app its own files with no permission at
+      all. Holding the media permissions bought one thing: listing saves made
+      by a PREVIOUS install, which Android disowns on uninstall. That is not
+      worth asking every user for their whole photo library, and it is the
+      permission Play scrutinises hardest.
+
+      MANAGE_EXTERNAL_STORAGE ("All files access") is never requested either.
     -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <!--
-      LibreStatus works fully offline. react-native-video pulls in
+      The app works fully offline. react-native-video pulls in
       ACCESS_NETWORK_STATE for streaming, which this app never uses, so we strip
       it to keep the permission set minimal.
     -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
 
+    <!--
+      The two haptic ticks (long-press opens selection, a save lands) go through
+      react-native's Vibration module, whose Android implementation calls the
+      system vibrator without checking for this permission: without it declared
+      the call raises a SecurityException instead of being silently ignored.
+      VIBRATE is a normal, install-time permission — no prompt, no data access.
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <queries>
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
+        <!--
+          Android 11+ hides other apps from `canOpenURL` unless the intent is
+          declared here. Without these three, Rate this app and Send feedback
+          were told nothing could open a store page, a web page or a mail
+          address on every modern device.
+        -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="market" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
     </queries>
 
+    <!--
+      Predictive back is on by default for apps targeting SDK 36, and it
+      replaces the legacy back dispatch with OnBackInvokedCallback. React
+      Native 0.82 registers no such callback anywhere in its Android source,
+      so nothing the app does with BackHandler was ever reached: the system
+      finished the activity instead, and one press from the Library tab, an
+      open settings overlay or a live multi-select quit the app outright.
+
+      `enableOnBackInvokedCallback="false"` below restores the dispatch
+      BackHandler listens on. Revisit when React Native supports the new
+      callback, because the opt-out is deprecated and a future platform
+      release will ignore it.
+    -->
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
       android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="false"
       android:supportsRtl="true"
+      android:enableOnBackInvokedCallback="false"
       android:requestLegacyExternalStorage="true">
+      <!--
+        The share cache under getCacheDir()/status-share, exposed for one
+        receiver at a time through a grant on the intent. Our own provider, so
+        the Repost path does not depend on a library's.
+      -->
+      <provider
+        android:name="androidx.core.content.FileProvider"
+        android:authorities="${applicationId}.share"
+        android:exported="false"
+        android:grantUriPermissions="true">
+        <meta-data
+          android:name="android.support.FILE_PROVIDER_PATHS"
+          android:resource="@xml/share_paths" />
+      </provider>
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

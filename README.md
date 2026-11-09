@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="96" alt="LibreStatus icon" />
+<img src="fastlane/metadata/android/en-US/images/icon.png" width="96" alt="Status Saver icon" />
 
-# LibreStatus
+# Status Saver
 
-**View, save and share WhatsApp statuses, fully offline.**
+**View, save and share statuses, fully offline.**
 
 No account, no ads, no trackers, no internet permission. Everything happens on your phone.
 
@@ -31,87 +31,99 @@ No account, no ads, no trackers, no internet permission. Everything happens on y
 </div>
 
 - **F-Droid:** [f-droid.org/packages/com.vaishnavmandlik.librestatus](https://f-droid.org/packages/com.vaishnavmandlik.librestatus/)
-- **Direct APK:** [LibreStatus-1.0.1.apk](https://github.com/vaishnav-mandlik/LibreStatus/releases/download/1.0.1/LibreStatus-1.0.1.apk) (latest on the [releases page](https://github.com/vaishnav-mandlik/LibreStatus/releases/latest))
+- **Google Play:** the same app, published as `com.mandlik.statussaverpro`
+- **Direct APK:** the [releases page](https://github.com/vaishnav-mandlik/LibreStatus/releases/latest)
 
-> WhatsApp statuses disappear after 24 hours. LibreStatus reads the statuses that
-> are already cached on your device after you view them, and lets you keep the ones
+This repository is the single source for both stores. The F-Droid and Play
+builds run the same code; they differ only in their application id (see
+[Store flavors](#store-flavors)). The app was called LibreStatus before 1.1.0.
+
+> A messaging app deletes the statuses you have viewed after 24 hours. Status
+> Saver lists the ones already cached on your phone and lets you keep the ones
 > you like.
 
 ## Screenshots
 
 <div align="center">
 
-| Statuses | Saved | Full-screen viewer | Settings |
-| :---: | :---: | :---: | :---: |
-| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpeg" width="200" alt="Status grid" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpeg" width="200" alt="Saved tab" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg" width="200" alt="Full-screen viewer" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg" width="200" alt="Settings" /> |
+| Feed | Viewer | Saved | Tools | Settings |
+| :---: | :---: | :---: | :---: | :---: |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="160" alt="Feed" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="160" alt="Viewer" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="160" alt="Saved" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="160" alt="Tools" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="160" alt="Settings" /> |
 
 </div>
 
 ## Features
 
-- Browse the image and video statuses currently on your device
-- Separate Images and Videos tabs, swipe to switch between them
-- Full-screen viewer with video playback and a seek bar
-- Save a status to your gallery with one tap
-- Share or repost a status to WhatsApp (or any other app)
-- A "Saved" tab for everything you've downloaded
-- Message a number on WhatsApp without saving it as a contact
-- Light, dark, and system themes
-- 8 languages: English, Spanish, Portuguese, Russian, French, German, Italian,
-  Dutch
+- All viewed statuses in one place, photos and videos together, sorted by time
+- Save one status or many at once, straight to your gallery (`DCIM/Status`)
+- Auto-save: keep every new status automatically when you open the app
+- Built-in photo viewer and video player
+- Repost a status or share it to any app
+- Favourites to find the ones you love quickly
+- Vault: move a saved status out of your gallery into the app's private storage
+- Open a chat with any number without saving it to your contacts
+- Light and dark theme, 8 languages
+- Works on Android 7 and later
 
 ## How it works
 
-1. Open WhatsApp and view someone's status.
-2. Open LibreStatus.
-3. On Android 11 and newer, grant access to the WhatsApp media folder once
-   through the system folder picker. On older versions, grant storage access.
-4. Tap a status to view it full-screen, then tap download to save it.
-
-The app never uploads anything. The status files it reads are the ones WhatsApp
-itself has already stored on your device.
+1. Open your messaging app and view the statuses you like.
+2. Open Status Saver and choose the `Android/media` folder once, when asked.
+3. Every status you viewed appears here. Tap Save to keep it in your gallery.
 
 ## Privacy
 
-LibreStatus is built to need as little as possible:
-
 - No `INTERNET` permission, so the app cannot send your data anywhere.
-- No analytics, no advertising IDs, no crash reporting.
-- No `MANAGE_EXTERNAL_STORAGE` ("All files access"). On Android 11+ it uses the
-  Storage Access Framework so you choose exactly which folder it can read.
+- No analytics, no advertising ID, no crash reporting, no account.
+- On Android 11 and later it asks for no storage or media permission at all:
+  the status folder is read through a grant you make in Android's own folder
+  picker, and the gallery album only holds copies the app wrote itself. On
+  Android 10 and below the storage permission stands in for both.
+- Never asks for "All files access".
 
-The full privacy policy and terms are available inside the app, under
-**Settings → About**.
+The full policy is in [PRIVACY.md](PRIVACY.md) and inside the app.
 
 ## Building from source
 
-Requirements: Node 20+, JDK 17, the Android SDK, and an Android device or
-emulator.
+Requirements: Node 20+, JDK 17 and the Android SDK.
 
 ```sh
-# install JS dependencies
-npm install
+npm ci
+npx tsc --noEmit                  # types
+npx eslint . --ext .ts,.tsx       # lint
+npx jest                          # tests
 
-# run on a connected device / emulator (starts Metro automatically)
-npm run android
-
-# build a release APK
-npm run build:android:release
-# output: android/app/build/outputs/apk/release/
+npm run android                   # run on a device or emulator
+npm run build:android:fdroid      # F-Droid flavor, one APK per ABI
 ```
 
-Run the checks:
+### Store flavors
 
-```sh
-npm test          # unit tests
-npm run lint      # eslint
-npx tsc --noEmit  # type check
-```
+| Flavor | Application id | Built by |
+|---|---|---|
+| `fdroid` | `com.vaishnavmandlik.librestatus` | F-Droid, from source, signed by F-Droid |
+| `play` | `com.mandlik.statussaverpro` | the maintainer, signed with the Play upload key |
+
+A store ties an app to its id forever, so each keeps the id it was published
+under. Nothing else differs; the only runtime check is which store the "Share
+app" link points to.
+
+`assembleFdroidRelease` needs no keystore. The Play tasks
+(`bundlePlayRelease`, `assemblePlayRelease`) refuse to run without
+`android/keystore.properties`, which is never committed here.
+
+### Releasing
+
+1. Bump `versionCode` and `versionName` in `android/app/build.gradle`.
+2. Add `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+3. Commit, tag (`git tag -a 1.2.0 -m 1.2.0`), push the tag. F-Droid picks the
+   tag up on its own; see [fdroid/README.md](fdroid/README.md).
+4. Build `bundlePlayRelease` with the upload key and upload it to Play.
 
 ## Tech
 
-React Native (0.82, new architecture + Hermes), TypeScript. Status folder access
-on Android 11+ is handled by a small native module using the Storage Access
+React Native 0.82 (new architecture, Hermes), TypeScript. Folder access on
+Android 11+ goes through a small native module using the Storage Access
 Framework.
 
 ## Contributing
@@ -125,9 +137,7 @@ checks above before opening a PR.
 
 ## Disclaimer
 
-LibreStatus is an independent, third-party app. It is not affiliated with,
-endorsed by, or connected to WhatsApp or Meta. WhatsApp is a trademark of its
-respective owner. Please respect other people's privacy and content rights when
-saving and sharing statuses.
-</content>
-</invoke>
+Status Saver is an independent app. It is not affiliated with, endorsed by, or
+connected to WhatsApp or Meta. WhatsApp is a trademark of its respective owner.
+Please respect other people's privacy and content rights when saving and
+sharing statuses.

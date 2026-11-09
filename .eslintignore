@@ -1,0 +1,5 @@
+node_modules/
+android/
+ios/
+# Design canvas exports: generated vendor runtime, not app source.
+Mobile app redesign improvement*/

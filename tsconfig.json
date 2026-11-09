@@ -1,5 +1,12 @@
 {
   "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    // The base config restricts `types` to jest. The architecture tests read
+    // the source tree, so they need Node's typings too. App code must never
+    // import a Node builtin — `__tests__/architecture.test.ts` enforces that,
+    // so widening this here cannot let one slip into the bundle unnoticed.
+    "types": ["jest", "node"]
+  },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods"]
 }

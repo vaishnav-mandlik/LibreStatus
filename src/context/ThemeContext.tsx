@@ -1,131 +1,116 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
-  useState,
   useEffect,
-  ReactNode,
+  useMemo,
+  useState,
 } from 'react';
-import { useColorScheme, Appearance } from 'react-native';
+import { useColorScheme } from 'react-native';
+import { setBaseSystemBars } from '../utils/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { palettes, type Palette } from '../theme/tokens';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark' | 'system';
 
-interface Theme {
-  background: string;
-  surface: string;
-  surfaceVariant: string;
-  primary: string;
-  primaryDark: string;
-  text: string;
-  textSecondary: string;
-  border: string;
-  success: string;
-  error: string;
-  warning: string;
-  card: string;
-  shadow: string;
-  modalBackground: string;
-  overlay: string;
-}
+const STORAGE_KEY = 'theme_mode';
 
-const lightTheme: Theme = {
-  background: '#F7F8FA',
-  surface: '#FFFFFF',
-  surfaceVariant: '#E8F6EF',
-  primary: '#17C066',
-  primaryDark: '#129854',
-  text: '#1A1A1A',
-  textSecondary: '#6F6F6F',
-  border: '#E5E5E5',
-  success: '#17C066',
-  error: '#DC2626',
-  warning: '#F59E0B',
-  card: '#FFFFFF',
-  shadow: 'rgba(17, 32, 23, 0.08)',
-  modalBackground: 'rgba(26, 26, 26, 0.9)',
-  overlay: 'rgba(26, 26, 26, 0.35)',
-};
+const isMode = (v: string): v is ThemeMode =>
+  v === 'light' || v === 'dark' || v === 'system';
 
-const darkTheme: Theme = {
-  background: '#0B141A',
-  surface: '#1F2C34',
-  surfaceVariant: '#111B21',
-  primary: '#00A884',
-  primaryDark: '#008069',
-  text: '#E9EDEF',
-  textSecondary: '#8696A0',
-  border: '#2A3942',
-  success: '#00A884',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  card: '#1F2C34',
-  shadow: 'rgba(0, 0, 0, 0.3)',
-  modalBackground: 'rgba(0, 0, 0, 0.95)',
-  overlay: 'rgba(0, 0, 0, 0.7)',
-};
-
-interface ThemeContextType {
-  theme: Theme;
+interface ThemeContextValue {
+  theme: Palette;
   themeMode: ThemeMode;
   isDark: boolean;
+  /** False until the stored preference has been read. */
+  ready: boolean;
   setThemeMode: (mode: ThemeMode) => void;
+  /**
+   * A colour for the status bar alone, with white icons, or null for the
+   * theme's own. The light theme's green Feed header asks for its green here
+   * while it is on screen. It is ignored in the dark theme.
+   */
+  setStatusTint: (color: string | null) => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const systemTheme = useColorScheme();
+  // useColorScheme already subscribes to Appearance changes and re-renders, so
+  // no extra listener is needed here.
+  const systemScheme = useColorScheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
-
-  const isDark =
-    themeMode === 'system' ? systemTheme === 'dark' : themeMode === 'dark';
-
-  const theme = isDark ? darkTheme : lightTheme;
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    loadThemePreference();
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then(stored => {
+        if (cancelled) {
+          return;
+        }
+        if (stored && isMode(stored)) {
+          setThemeModeState(stored);
+        }
+        setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReady(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  const setThemeMode = useCallback((mode: ThemeMode) => {
+    // Update the UI first, then persist. The old version awaited the write
+    // before re-rendering, which made the toggle feel laggy.
+    setThemeModeState(mode);
+    AsyncStorage.setItem(STORAGE_KEY, mode).catch(() => undefined);
+  }, []);
+
+  const [statusTint, setStatusTint] = useState<string | null>(null);
+
+  const value = useMemo<ThemeContextValue>(() => {
+    const isDark =
+      themeMode === 'system' ? systemScheme !== 'light' : themeMode === 'dark';
+    return {
+      theme: isDark ? palettes.dark : palettes.light,
+      themeMode,
+      isDark,
+      ready,
+      setThemeMode,
+      setStatusTint,
+    };
+  }, [themeMode, systemScheme, ready, setThemeMode]);
+
+  /*
+   * The bars follow the theme the app settled on, not the system's night mode.
+   * Keyed off a resource qualifier they inverted whenever the two disagreed:
+   * Dark chosen on a phone in Light mode drew a black gesture handle on the
+   * near-black tab bar, and it disappeared.
+   */
   useEffect(() => {
-    const subscription = Appearance.addChangeListener(() => {
-      // Re-render when system theme changes
-    });
-    return () => subscription.remove();
-  }, []);
-
-  const loadThemePreference = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('theme_mode');
-      if (saved) {
-        setThemeModeState(saved as ThemeMode);
-      }
-    } catch (error) {
-      console.error('Failed to load theme preference:', error);
-    }
-  };
-
-  const setThemeMode = async (mode: ThemeMode) => {
-    try {
-      await AsyncStorage.setItem('theme_mode', mode);
-      setThemeModeState(mode);
-    } catch (error) {
-      console.error('Failed to save theme preference:', error);
-    }
-  };
+    void setBaseSystemBars(
+      !value.isDark,
+      value.theme.bg,
+      statusTint && !value.isDark ? { light: false, color: statusTint } : undefined,
+    );
+  }, [value.isDark, value.theme.bg, statusTint]);
 
   return (
-    <ThemeContext.Provider value={{ theme, themeMode, isDark, setThemeMode }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };
 
-export const useTheme = () => {
+export const useTheme = (): ThemeContextValue => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 };

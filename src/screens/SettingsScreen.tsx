@@ -1,742 +1,484 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
+  Animated,
+  Pressable,
   ScrollView,
   Share,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
-import * as RNLocalize from 'react-native-localize';
-import { useTheme } from '../context/ThemeContext';
-import { getDefaultDialCode } from '../utils/countryDialCodes';
-import { LanguageCode, useLanguage } from '../context/LanguageContext';
-import { useFeedback } from '../context/FeedbackContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon } from '../components/icons';
+import {
+  CSS_EASE,
+  Card,
+  Eyebrow,
+  Row,
+  ScreenHeader,
+  SegmentedControl,
+  pressedStyle,
+  type SegmentOption,
+} from '../components/ui';
+import { OptionSheet } from '../components/Sheet';
+import { useTheme, type ThemeMode } from '../context/ThemeContext';
+import { useLanguage, type LanguageCode } from '../context/LanguageContext';
+import {
+  TOAST_BOTTOM,
+  useFeedback,
+  useToastBottom,
+} from '../context/FeedbackContext';
+import {
+  feedbackReport,
+  openFeedbackMail,
+  openStoreListing,
+  STORE_WEB_URL,
+} from '../utils/outbound';
+import { needsFolderPicker } from '../utils/permissions';
+import { space, type } from '../theme/tokens';
+import { APP_VERSION, BRAND_FULL } from '../appInfo';
+import type { Prefs } from '../utils/prefs';
+import { setSecureFlag } from '../utils/native';
+import type { MediaAccess } from '../utils/permissions';
+import {
+  peekGalleryAccess,
+  requestGalleryAccess,
+} from '../utils/statusManager';
+import {
+  hasFolderAccess,
+  requestFolderAccess,
+  subscribeFolderAccess,
+} from '../utils/folderPicker';
 
-interface SettingsScreenProps {
+export interface SettingsScreenProps {
   onClose: () => void;
-  onNavigateToAbout?: () => void;
-  onNavigateToHelp?: () => void;
+  onOpenHelp: () => void;
+  onOpenAbout: () => void;
+  /**
+   * Owned by the app shell. This screen must not load or persist prefs itself:
+   * every holder of a full copy writes the whole record, so the last writer
+   * silently reverted whatever the others had changed.
+   */
+  prefs: Prefs;
+  onPrefsChange: (patch: Partial<Prefs>) => void;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onClose,
-  onNavigateToAbout,
-  onNavigateToHelp,
+  onOpenHelp,
+  onOpenAbout,
+  prefs,
+  onPrefsChange: update,
 }) => {
   const { theme, themeMode, setThemeMode } = useTheme();
-  const { language, setLanguage, t, options } = useLanguage();
-  const { showMessage } = useFeedback();
-  const [countryCode, setCountryCode] = useState(() =>
-    getDefaultDialCode(RNLocalize.getCountry()),
-  );
-  const [dmPhone, setDmPhone] = useState('');
-  const [dmMessage, setDmMessage] = useState('');
-  const [isLanguageModalVisible, setLanguageModalVisible] = useState(false);
+  const { t, language, setLanguage, options } = useLanguage();
+  const { showToast } = useFeedback();
+  const insets = useSafeAreaInsets();
 
-  const sanitizedCountryCode = useMemo(
-    () => countryCode.replace(/[^\d]/g, ''),
-    [countryCode],
-  );
-  const cleanedNumber = useMemo(() => dmPhone.replace(/[^\d]/g, ''), [dmPhone]);
-  const fullPhoneNumber = useMemo(
-    () => sanitizedCountryCode + cleanedNumber,
-    [sanitizedCountryCode, cleanedNumber],
-  );
-  const canSendDirectMessage =
-    sanitizedCountryCode.length >= 1 && cleanedNumber.length >= 6;
+  // No bottom nav behind this screen, so the toast sits near the edge.
+  useToastBottom(TOAST_BOTTOM.settings);
 
-  const cycleThemeMode = useCallback(() => {
-    if (themeMode === 'light') {
-      setThemeMode('dark');
-      return;
-    }
-    if (themeMode === 'dark') {
-      setThemeMode('system');
-      return;
-    }
-    setThemeMode('light');
-  }, [setThemeMode, themeMode]);
+  const [folderUri, setFolderUri] = useState<string | null>(null);
+  /** Photo and video access; null until the first check answers. */
+  const [mediaAccess, setMediaAccess] = useState<MediaAccess | null>(null);
+  const [langSheet, setLangSheet] = useState(false);
 
-  const themeLabel = useMemo(() => {
-    if (themeMode === 'system') return t('settings.themeFollowSystem');
-    if (themeMode === 'dark') return t('settings.themeDark');
-    return t('settings.themeLight');
-  }, [t, themeMode]);
+  // The prototype's `animation: fadeIn .2s both` on this screen.
+  const fade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const run = Animated.timing(fade, {
+      toValue: 1,
+      duration: 200,
+      easing: CSS_EASE,
+      useNativeDriver: true,
+    });
+    run.start();
+    // This screen is an overlay: closing it during the fade left the run
+    // driving a node that no longer exists, and its completion callback
+    // firing into an unmounted tree.
+    return () => run.stop();
+  }, [fade]);
 
-  const themeChipText = useMemo(() => {
-    if (themeMode === 'system') return t('settings.themeSystemShort');
-    if (themeMode === 'dark') return t('settings.themeDarkShort');
-    return t('settings.themeLightShort');
-  }, [t, themeMode]);
+  const mounted = useRef(true);
 
-  const selectedLanguageOption = useMemo(() => {
-    return options.find(option => option.code === language) || options[0];
-  }, [language, options]);
-
-  const handleShareApp = useCallback(async () => {
-    try {
-      const downloadUrl =
-        'https://f-droid.org/packages/com.vaishnavmandlik.librestatus/';
-      const shareMessage = `${t(
-        'settings.shareAppAlertMessage',
-      )}\n\n${downloadUrl}`;
-
-      await Share.share({
-        message: shareMessage,
-        title: t('settings.shareAppAlertTitle'),
-      });
-    } catch {
-      showMessage({
-        title: t('settings.shareAppAlertTitle'),
-        message: t('settings.shareAppAlertMessage'),
-        type: 'info',
-      });
-    }
-  }, [showMessage, t]);
-
-  const handleCountryCodeChange = useCallback((value: string) => {
-    const digitsOnly = value.replace(/[^\d]/g, '');
-    setCountryCode(digitsOnly ? `+${digitsOnly}` : '+');
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
-  const handlePhoneNumberChange = useCallback((value: string) => {
-    const digitsOnly = value.replace(/[^\d]/g, '');
-    setDmPhone(digitsOnly);
+  /*
+   * Re-read on every grant change, not only at mount.
+   *
+   * The grant can go away while this screen is open: a listing that comes back
+   * with the tree revoked drops the stored URI and wakes the shell, which
+   * re-routes the tab behind Settings to onboarding. Read once, the row went on
+   * showing "Android/media · granted" with its green dot over an app that had
+   * already decided it had no folder — and closing Settings dropped the user
+   * onto the picker the row had just told them was unnecessary. The same
+   * subscription is what refreshes the row when the picker stores a new grant.
+   */
+  useEffect(() => {
+    const read = (): void => {
+      hasFolderAccess('whatsapp').then(folder => {
+        if (mounted.current) {
+          setFolderUri(folder);
+        }
+      });
+    };
+    read();
+    return subscribeFolderAccess(read);
   }, []);
 
-  const handleDirectMessage = useCallback(async () => {
-    if (!canSendDirectMessage) {
-      showMessage({
-        title: t('settings.directMessageAlertTitle'),
-        message: t('settings.directMessageAlertMessage'),
-        type: 'warning',
+  // A check, never a prompt: the row only asks when tapped.
+  useEffect(() => {
+    peekGalleryAccess().then(held => {
+      if (mounted.current) {
+        setMediaAccess(held);
+      }
+    });
+  }, []);
+
+  const onMediaAccess = useCallback(() => {
+    void (async () => {
+      const next = await requestGalleryAccess();
+      if (mounted.current) {
+        setMediaAccess(next);
+      }
+    })();
+  }, []);
+
+  // ── Appearance ─────────────────────────────────────────────────────────────
+
+  const themeOptions = useMemo<Array<SegmentOption<ThemeMode>>>(
+    () => [
+      { key: 'light', label: t('settings.themeLight'), icon: 'sun' },
+      { key: 'dark', label: t('settings.themeDark'), icon: 'moon' },
+      { key: 'system', label: t('settings.themeSystem'), icon: 'monitor' },
+    ],
+    [t],
+  );
+
+  const onThemeChange = useCallback(
+    (mode: ThemeMode) => {
+      setThemeMode(mode);
+      // Only Light is announced: it is the switch that looks like nothing
+      // happened until the whole app repaints.
+      if (mode === 'light') {
+        showToast({
+          message: t('toast.lightTheme'),
+          meta: t('toast.metaTheme'),
+        });
+      }
+    },
+    [setThemeMode, showToast, t],
+  );
+
+  // ── Privacy ────────────────────────────────────────────────────────────────
+
+  const onHideRecents = useCallback(
+    (next: boolean) => {
+      update({ hideFromRecents: next });
+      setSecureFlag(next).then(applied => {
+        /*
+         * The native flag is the truth. A call that did not go through means
+         * FLAG_SECURE is not on this window, whichever way the switch was
+         * moved — so the honest reading is off, not the opposite of what was
+         * asked for. Writing `!next` meant *turning the switch off* on a build
+         * that cannot apply the flag put it straight back on, leaving the app
+         * claiming a blank recents preview it does not have.
+         *
+         * Deliberately NOT gated on this screen still being mounted. `update`
+         * is the shell's setter, not local state, so calling it late is safe —
+         * and the native call outlives a quick tap-and-close, so the guard
+         * meant closing Settings before it answered persisted `true` for a
+         * flag that was never applied. The switch then read "on" on every
+         * later launch, promising a blank recents preview over a window that
+         * still showed the user's statuses.
+         */
+        if (!applied) {
+          update({ hideFromRecents: false });
+        }
       });
-      return;
-    }
+    },
+    [update],
+  );
 
-    const message = dmMessage.trim();
-    const encodedMessage = encodeURIComponent(message);
-    const nativeUrl = `whatsapp://send?phone=${fullPhoneNumber}&text=${encodedMessage}`;
-    const webUrl = `https://wa.me/${fullPhoneNumber}?text=${encodedMessage}`;
+  const onPickFolder = useCallback(() => {
+    requestFolderAccess('whatsapp')
+      .then(uri => {
+        if (!mounted.current || !uri) {
+          return;
+        }
+        setFolderUri(uri);
+        showToast({
+          message: t('toast.folderGranted'),
+          meta: t('toast.metaSetup'),
+          type: 'success',
+        });
+      })
+      .catch((error: { code?: string }) => {
+        // Backing out of the system picker is a choice, not a failure.
+        if (error?.code === 'CANCELLED' || !mounted.current) {
+          return;
+        }
+        showToast({
+          message: t('onboard.failed'),
+          meta: t('toast.metaSetup'),
+          type: 'error',
+        });
+      });
+  }, [showToast, t]);
 
-    try {
-      const supported = await Linking.canOpenURL(nativeUrl);
-      if (supported) {
-        await Linking.openURL(nativeUrl);
+  // ── General ────────────────────────────────────────────────────────────────
+
+  const languageOptions = useMemo(
+    () => options.map(option => ({ value: option.code, label: option.label })),
+    [options],
+  );
+
+  const languageLabel =
+    options.find(option => option.code === language)?.label ?? language;
+
+  /*
+   * Rate and Feedback both hand a URL to Android rather than fetching anything
+   * — this app holds no internet permission and is not about to start. Either
+   * can find nothing installed that claims the scheme (no Play Store, no mail
+   * client), and both say so instead of leaving the row looking dead.
+   */
+  const onRate = useCallback(() => {
+    void (async () => {
+      if (!(await openStoreListing())) {
+        showToast({
+          message: t('toast.noStore'),
+          meta: t('toast.metaLink'),
+          type: 'error',
+        });
+      }
+    })();
+  }, [showToast, t]);
+
+  const onFeedback = useCallback(() => {
+    void (async () => {
+      if (await openFeedbackMail(t('feedback.subject'))) {
         return;
       }
-      await Linking.openURL(webUrl);
-    } catch {
-      showMessage({
-        title: t('settings.directMessageAlertTitle'),
-        message: t('settings.directMessageWhatsappError'),
-        type: 'error',
-      });
-    }
-  }, [canSendDirectMessage, dmMessage, fullPhoneNumber, showMessage, t]);
+      // No mail client: the share sheet carries the same report to whatever
+      // the user does have. A dismissed sheet rejects on some Android builds,
+      // which is not a failure worth a toast.
+      Share.share({ message: feedbackReport(t('feedback.subject')) }).catch(
+        () => {},
+      );
+    })();
+  }, [t]);
 
-  const handleLanguageSelect = useCallback(
-    (code: LanguageCode) => {
-      setLanguage(code);
-      setLanguageModalVisible(false);
-    },
-    [setLanguage],
-  );
+  const onShare = useCallback(() => {
+    /*
+     * The one string in the app that is assembled here rather than looked up,
+     * and the only one that travels to other apps and other people. It joins
+     * with the middot the rest of the copy uses: an em dash was slipping the
+     * one punctuation mark this app never writes into someone else's chat.
+     *
+     * The Play listing goes on its own line, as the https address rather
+     * than market://: the person receiving it may open it in a chat app or on
+     * a computer, where only the web address works, and on a phone Android
+     * still hands it to the Play Store. It is the same address "Rate this
+     * app" falls back to. Until the app is published, and during the closed
+     * test for anyone who is not a tester, Play answers it with "not found".
+     *
+     * A dismissed share sheet rejects on some Android builds; that is not an
+     * error worth surfacing.
+     */
+    Share.share({
+      message: `${BRAND_FULL} · ${t('about.tagline')}\n${STORE_WEB_URL}`,
+    }).catch(() => {});
+  }, [t]);
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.background }]}>
-      <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          {t('settings.title')}
-        </Text>
-        <TouchableOpacity
-          style={styles.headerIcon}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.accessibility.close')}
-        >
-          <Icon name="close" size={20} color={theme.textSecondary} />
-        </TouchableOpacity>
-      </View>
+    <Animated.View
+      style={[styles.screen, { backgroundColor: theme.bg, opacity: fade }]}
+    >
+      <ScreenHeader
+        title={t('settings.title')}
+        right={
+          <Pressable
+            onPress={onClose}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close')}
+            style={({ pressed }) => [styles.close, pressedStyle(pressed)]}
+          >
+            <Icon
+              name="close"
+              size={19}
+              color={theme.textMuted}
+              strokeWidth={1.9}
+            />
+          </Pressable>
+        }
+      />
 
-      <KeyboardAvoidingView
-        style={styles.grow}
-        behavior={Platform.select({ ios: 'padding', android: undefined })}
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          style={styles.grow}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={cycleThemeMode}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.accessibility.changeTheme')}
-            >
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="skin" size={18} color={theme.primary} />
-                </View>
-                <View style={styles.flexOne}>
-                  <Text style={[styles.rowTitle, { color: theme.text }]}>
-                    {t('settings.themeTitle')}
-                  </Text>
-                  <Text
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
-                  >
-                    {themeLabel}
-                  </Text>
-                </View>
-              </View>
-              <View
-                style={[
-                  styles.valueChip,
-                  { backgroundColor: theme.surfaceVariant },
-                ]}
-              >
-                <Text style={[styles.valueChipText, { color: theme.primary }]}>
-                  {themeChipText}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <View style={[styles.card, { backgroundColor: theme.surface }]}>
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="earth" size={18} color={theme.primary} />
-                </View>
-                <View style={styles.flexOne}>
-                  <Text
-                    style={[
-                      styles.cardSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    {t('settings.languageDescription')}
-                  </Text>
-                </View>
-              </View>
-              <View>
-                <Text
-                  style={[styles.dropdownLabel, { color: theme.textSecondary }]}
-                >
-                  {t('settings.languageSelectLabel')}
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.dropdownField,
-                    {
-                      backgroundColor: theme.surfaceVariant,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                  onPress={() => setLanguageModalVisible(true)}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('settings.languageModalTitle')}
-                >
-                  <Text style={[styles.dropdownValue, { color: theme.text }]}>
-                    {selectedLanguageOption.label}
-                  </Text>
-                  <Icon name="down" size={16} color={theme.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={[styles.card, { backgroundColor: theme.surface }]}>
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="message1" size={18} color={theme.primary} />
-                </View>
-                <View style={styles.flexOne}>
-                  <Text
-                    style={[
-                      styles.cardSubtitle,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    {t('settings.directMessageCardSubtitle')}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.phoneRow}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.countryInput,
-                    {
-                      backgroundColor: theme.surfaceVariant,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                  value={countryCode}
-                  onChangeText={handleCountryCodeChange}
-                  placeholder={t('settings.directMessageCountryPlaceholder')}
-                  placeholderTextColor={theme.textSecondary}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                  maxLength={6}
-                  accessibilityLabel="Country dial code"
-                />
-
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.subscriberInput,
-                    {
-                      backgroundColor: theme.surfaceVariant,
-                      color: theme.text,
-                      borderColor: theme.border,
-                    },
-                  ]}
-                  value={dmPhone}
-                  onChangeText={handlePhoneNumberChange}
-                  placeholder={t('settings.directMessageNumberPlaceholder')}
-                  placeholderTextColor={theme.textSecondary}
-                  keyboardType="phone-pad"
-                  returnKeyType="next"
-                  maxLength={15}
-                  accessibilityLabel="Phone number"
-                />
-              </View>
-
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.textArea,
-                  {
-                    backgroundColor: theme.surfaceVariant,
-                    color: theme.text,
-                    borderColor: theme.border,
-                  },
-                ]}
-                value={dmMessage}
-                onChangeText={setDmMessage}
-                placeholder={t('settings.directMessageMessagePlaceholder')}
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
-
-              <TouchableOpacity
-                style={[
-                  styles.primaryButton,
-                  {
-                    backgroundColor: canSendDirectMessage
-                      ? theme.primary
-                      : theme.border,
-                  },
-                ]}
-                onPress={handleDirectMessage}
-                disabled={!canSendDirectMessage}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: !canSendDirectMessage }}
-              >
-                <View style={styles.primaryButtonContent}>
-                  <Text style={styles.primaryButtonText}>
-                    {t('settings.directMessageButton')}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={handleShareApp}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.aboutShare')}
-            >
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="sharealt" size={18} color={theme.primary} />
-                </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  {t('settings.aboutShare')}
-                </Text>
-              </View>
-              <Icon name="right" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={onNavigateToHelp}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.aboutHelp')}
-            >
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon
-                    name="questioncircleo"
-                    size={18}
-                    color={theme.primary}
-                  />
-                </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  {t('settings.aboutHelp')}
-                </Text>
-              </View>
-              <Icon name="right" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={() =>
-                Linking.openURL('https://forms.gle/r5iuiKeWxaCe2T347')
-              }
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Feedback"
-            >
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="message1" size={18} color={theme.primary} />
-                </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  Feedback
-                </Text>
-              </View>
-              <Icon name="right" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.row, { backgroundColor: theme.surface }]}
-              onPress={onNavigateToAbout}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.aboutTitle')}
-            >
-              <View style={styles.rowLeft}>
-                <View
-                  style={[
-                    styles.rowIcon,
-                    { backgroundColor: theme.surfaceVariant },
-                  ]}
-                >
-                  <Icon name="infocirlceo" size={18} color={theme.primary} />
-                </View>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>
-                  {t('settings.aboutTitle')}
-                </Text>
-              </View>
-              <Icon name="right" size={16} color={theme.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-              {t('settings.versionLabel')}
+        <View style={styles.block}>
+          <Card padded>
+            <Text style={[type.brandCard, styles.brand, { color: theme.text }]}>
+              {t('brand.name')}
             </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <Text style={[type.body, { color: theme.textMuted }]}>
+              {t('settings.aboutCard')}
+            </Text>
+          </Card>
+        </View>
 
-      <Modal
-        visible={isLanguageModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[styles.modalCard, { backgroundColor: theme.surface }]}
-              >
-                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  {t('settings.languageModalTitle')}
-                </Text>
-                {options.map(option => {
-                  const isSelected = option.code === language;
-                  return (
-                    <TouchableOpacity
-                      key={option.code}
-                      style={[
-                        styles.modalOption,
-                        isSelected && {
-                          backgroundColor: theme.surfaceVariant,
-                        },
-                      ]}
-                      onPress={() => handleLanguageSelect(option.code)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[styles.modalOptionText, { color: theme.text }]}
-                      >
-                        {option.label}
-                      </Text>
-                      {isSelected && (
-                        <Icon name="check" size={16} color={theme.primary} />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </View>
+        <Eyebrow>{t('settings.appearance')}</Eyebrow>
+        <View style={styles.block}>
+          <SegmentedControl<ThemeMode>
+            options={themeOptions}
+            value={themeMode}
+            onChange={onThemeChange}
+            boldKey="dark"
+          />
+        </View>
+
+        <Eyebrow>{t('settings.privacy')}</Eyebrow>
+        <View style={[styles.list, { borderTopColor: theme.hairline }]}>
+          <Row
+            title={t('settings.hideRecents')}
+            subtitle={t('settings.hideRecentsSub')}
+            toggle={{
+              value: prefs.hideFromRecents,
+              onValueChange: onHideRecents,
+            }}
+          />
+          {/* Below Android 11 there is no folder picker and no grant to
+              show: statuses are read straight off the card with the storage
+              permission. The row stood there permanently amber, saying the
+              folder was "Not chosen yet", and tapping it took a tree grant
+              nothing on that version ever reads. */}
+          {needsFolderPicker() ? (
+            <Row
+              title={t('settings.statusFolder')}
+              subtitle={
+                folderUri
+                  ? t('settings.folderGranted')
+                  : t('settings.folderMissing')
+              }
+              dot={folderUri ? theme.accent : theme.warning}
+              onPress={onPickFolder}
+              subTight
+            />
+          ) : null}
+          {/* Android 11 and up need no photo or video permission: the app
+              only ever touches the copies it wrote itself, and MediaStore
+              hands an app its own files. There is nothing here to grant or
+              revoke, so the row would be a switch that does nothing. */}
+          {needsFolderPicker() ? null : (
+            <Row
+              title={t('settings.mediaAccess')}
+              subtitle={
+                mediaAccess === 'none'
+                  ? t('settings.mediaMissing')
+                  : t('settings.mediaGranted')
+              }
+              dot={mediaAccess === 'none' ? theme.warning : theme.accent}
+              onPress={onMediaAccess}
+              subTight
+              flat
+            />
+          )}
+        </View>
+
+        <Eyebrow style={styles.eyebrowSpaced}>{t('settings.general')}</Eyebrow>
+        <View style={[styles.list, { borderTopColor: theme.hairline }]}>
+          <Row
+            title={t('settings.language')}
+            subtitle={t('settings.languagesAvailable', { n: options.length })}
+            value={languageLabel}
+            onPress={() => setLangSheet(true)}
+            subTight
+          />
+          <Row title={t('settings.rate')} onPress={onRate} singleLine flat />
+          <Row
+            title={t('settings.feedback')}
+            onPress={onFeedback}
+            singleLine
+            flat
+          />
+          <Row
+            title={t('settings.shareApp')}
+            onPress={onShare}
+            singleLine
+            flat
+          />
+          <Row
+            title={t('settings.help')}
+            onPress={onOpenHelp}
+            singleLine
+            flat
+          />
+          <Row
+            title={t('settings.legal')}
+            onPress={onOpenAbout}
+            singleLine
+            flat
+          />
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={[type.monoLight, { color: theme.textFaint }]}>
+            {`${BRAND_FULL} ${APP_VERSION}`}
+          </Text>
+          <Text style={[type.footer, { color: theme.textFooter }]}>
+            {t('settings.footer')}
+          </Text>
+          <Text style={[type.footer, { color: theme.textFooter }]}>
+            {t('settings.madeBy')}
+          </Text>
+        </View>
+      </ScrollView>
+
+      <OptionSheet<LanguageCode>
+        visible={langSheet}
+        title={t('settings.language')}
+        options={languageOptions}
+        selected={language}
+        onSelect={setLanguage}
+        onClose={() => setLangSheet(false)}
+        scroll
+      />
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  headerIcon: {
-    width: 36,
-    height: 36,
+  screen: { flex: 1 },
+  close: {
+    width: 30,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  grow: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: 40,
-  },
-  section: {
-    paddingTop: 16,
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    marginLeft: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 8,
-  },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  rowSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-    opacity: 0.8,
-  },
-  valueChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  valueChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  card: {
-    borderRadius: 14,
-    padding: 18,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    marginBottom: 14,
-    gap: 12,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    marginTop: 4,
-    lineHeight: 18,
-    opacity: 0.8,
-  },
-  phoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    marginBottom: 12,
-  },
-  countryInput: {
-    width: 100,
-    marginRight: 12,
-    marginBottom: 0,
-    textAlign: 'center',
-  },
-  subscriberInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  textArea: {
-    minHeight: 88,
-  },
-  primaryButton: {
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    marginTop: 6,
-  },
-  primaryButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonIcon: {
-    marginLeft: 8,
-  },
-  primaryButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
+  /** Eyebrow carries its own side inset, so the blocks under it carry theirs. */
+  block: { paddingHorizontal: space.xl, paddingBottom: space.xl },
+  brand: { marginBottom: space.gap },
+  list: { borderTopWidth: 1 },
+  eyebrowSpaced: { paddingTop: space.xl },
   footer: {
+    paddingTop: 20,
+    paddingHorizontal: space.xl,
+    paddingBottom: space.huge,
     alignItems: 'center',
-    paddingVertical: 2,
-  },
-  footerText: {
-    fontSize: 12,
-    opacity: 0.5,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  dropdownLabel: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 8,
-  },
-  dropdownField: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  dropdownValue: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 30, 0.45)',
-    justifyContent: 'flex-end',
-    padding: 16,
-  },
-  modalCard: {
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
-    gap: 6,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
-  modalOptionText: {
-    fontSize: 15,
-    fontWeight: '500',
+    gap: space.xs,
   },
 });
 

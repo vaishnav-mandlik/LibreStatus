@@ -6,6 +6,24 @@ buildscript {
         targetSdkVersion = 36
         ndkVersion = "27.1.12297006"
         kotlinVersion = "2.1.20"
+
+        /*
+         * react-native-video's streaming back ends, all off.
+         *
+         * These are not off by default. The library ships its own
+         * node_modules/react-native-video/android/gradle.properties turning
+         * DASH, HLS and SmoothStreaming on, and safeExtGet falls through to it
+         * when the root project says nothing, so the release was linking three
+         * network streaming stacks and their manifest entries. This app has no
+         * INTERNET permission and plays nothing but local files off the disk,
+         * so none of them can ever be reached. Setting them here overrides the
+         * library's defaults, because rootProject.ext wins the lookup.
+         */
+        useExoplayerDash = false
+        useExoplayerHls = false
+        useExoplayerSmoothStreaming = false
+        useExoplayerRtsp = false
+        useExoplayerIMA = false
     }
     repositories {
         google()

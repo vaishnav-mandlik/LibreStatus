@@ -1,15 +1,16 @@
 {
-  "name": "whatsappstatus",
+  "name": "statussaverpro",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android --mode playDebug",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "build:android:release": "cd android && ./gradlew assembleRelease",
-    "build:android:bundle": "cd android && ./gradlew bundleRelease",
+    "build:android:fdroid": "cd android && ./gradlew assembleFdroidRelease",
+    "build:android:release": "cd android && ./gradlew assemblePlayRelease",
+    "build:android:bundle": "cd android && ./gradlew bundlePlayRelease",
     "build:android:clean": "cd android && ./gradlew clean",
     "build:ios:release": "cd ios && xcodebuild -workspace whatsappstatus.xcworkspace -scheme whatsappstatus -configuration Release clean archive"
   },
@@ -21,10 +22,9 @@
     "react-native-fs": "^2.20.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.4.4",
-    "react-native-permissions": "^5.4.4",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-share": "^12.2.1",
-    "react-native-vector-icons": "^10.3.0",
+    "react-native-svg": "^15.15.5",
     "react-native-video": "^6.18.0"
   },
   "devDependencies": {
@@ -40,7 +40,6 @@
     "@react-native/typescript-config": "0.82.1",
     "@types/jest": "^29.5.13",
     "@types/react": "^19.1.1",
-    "@types/react-native-vector-icons": "^6.4.18",
     "@types/react-test-renderer": "^19.1.0",
     "eslint": "^8.19.0",
     "jest": "^29.6.3",

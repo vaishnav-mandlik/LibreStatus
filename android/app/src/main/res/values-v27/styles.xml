@@ -1,0 +1,23 @@
+<resources>
+
+    <!--
+      Android 8.1 and up, where a light navigation bar is possible.
+
+      The base theme in values/ has to paint the navigation bar black, because
+      android:windowLightNavigationBar was only added in API 27: on 7.0, 7.1
+      and 8.0 it is ignored, so a near-white bar there keeps the white
+      navigation buttons and the user is left tapping three invisible shapes
+      for the whole session. From 27 the attribute works, so the bar can match
+      the surface the app paints, which is what every newer device shows.
+    -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/splash_bg</item>
+        <item name="android:statusBarColor">@color/splash_bg</item>
+        <item name="android:navigationBarColor">@color/splash_bg</item>
+        <!-- Dark icons over the light bar colours above; values-night flips it. -->
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+    </style>
+
+</resources>

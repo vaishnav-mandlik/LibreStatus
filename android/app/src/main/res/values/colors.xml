@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The colour the window is painted while React Native is still loading:
+      `light.bg` from src/theme/tokens.ts. values-night carries the dark
+      palette's `bg`. Both follow the system setting, which is also the app's
+      default theme, so the first frame of the process is already the colour
+      the app paints next and the launch reads as one continuous surface
+      instead of a bare system window followed by a jump.
+    -->
+    <color name="splash_bg">#FAFAFA</color>
+
+    <!--
+      The adaptive icon's background layer. The foreground is the whole
+      artwork and is opaque, so this is never seen; it is the mean colour of
+      the artwork's border, written here by store/make-icons.py, so that it
+      matches anyway.
+    -->
+    <color name="ic_launcher_background">#0E3325</color>
+</resources>

@@ -1,0 +1,25 @@
+<resources>
+
+    <!--
+      Android 12+ draws a system splash screen over every cold start. Left
+      unconfigured it is white with the launcher icon; this makes it the same
+      surface the app paints next, with the icon it already has.
+    -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:windowBackground">@color/splash_bg</item>
+        <item name="android:statusBarColor">@color/splash_bg</item>
+        <item name="android:navigationBarColor">@color/splash_bg</item>
+        <!-- Dark icons over the light bar colours above; values-night flips it. -->
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/light_system_bars</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
+        <!--
+          The adaptive icon, which the system masks to a circle here. A
+          full-bleed square icon lost its corners to that mask; the adaptive
+          one keeps the mark inside the safe zone, so nothing is clipped.
+        -->
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+    </style>
+
+</resources>

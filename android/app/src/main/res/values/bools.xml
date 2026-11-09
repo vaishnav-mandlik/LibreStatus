@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Whether the system bars are light enough to need dark icons. The bars are
+      painted @color/splash_bg, which is near-white in the light theme, and
+      without these the clock, battery and the three navigation buttons were
+      white on white until React Native's StatusBar ran (and the navigation
+      buttons stayed invisible for the whole session, since nothing in the app
+      ever sets their appearance).
+    -->
+    <bool name="light_system_bars">true</bool>
+</resources>

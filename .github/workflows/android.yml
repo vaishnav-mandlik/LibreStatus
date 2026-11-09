@@ -1,0 +1,42 @@
+name: Android
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx eslint . --ext .ts,.tsx
+      - run: npx jest
+
+      # The same flavor F-Droid builds, with no keystore, so this proves the
+      # F-Droid build works without any secret. The APKs are debug-signed
+      # here and are only for checking; F-Droid signs its own.
+      - name: Build F-Droid flavor
+        working-directory: android
+        run: ./gradlew assembleFdroidRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-apks
+          path: android/app/build/outputs/apk/fdroid/release/*.apk

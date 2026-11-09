@@ -35,11 +35,12 @@ local.properties
 !debug.keystore
 .kotlin/
 
-# Release signing configuration (NEVER commit these!)
-keystore.properties
+# Release signing. Never commit a real key or its passwords: this repository
+# is public. F-Droid signs its own builds; the Play upload key lives elsewhere.
 release.keystore
-*.jks
+keystore.properties
 *.p12
+*.jks
 
 # node.js
 #

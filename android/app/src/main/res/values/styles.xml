@@ -2,8 +2,32 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!--
+          What the window shows until React Native paints its first frame.
+          Without this the launch opened on the platform's default window
+          background, which is white on most devices and grey on some, and
+          then cut to the app's own dark or light surface a moment later. The
+          jump was most of what made the start feel slow.
+        -->
+        <item name="android:windowBackground">@color/splash_bg</item>
+        <item name="android:statusBarColor">@color/splash_bg</item>
+        <!-- Dark icons over the light status bar above; values-night flips it. -->
+        <item name="android:windowLightStatusBar">@bool/light_system_bars</item>
+        <!--
+          Black, and deliberately not @color/splash_bg, which every other bar
+          here uses.
+
+          This file is what Android 7.0, 7.1 and 8.0 get, and
+          android:windowLightNavigationBar does not exist until API 27. Paint
+          the bar near-white on those and the attribute that would darken the
+          buttons is silently ignored: the user gets white buttons on a white
+          bar, three invisible shapes, and nothing in the app ever sets their
+          appearance afterwards so it lasts the whole session. Black keeps the
+          white buttons legible. values-v27/styles.xml carries the matching
+          light bar for every release that can actually do it.
+        -->
+        <item name="android:navigationBarColor">@android:color/black</item>
     </style>
 
 </resources>

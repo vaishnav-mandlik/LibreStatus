@@ -243,7 +243,18 @@ const COUNTRY_DIAL_CODES: Record<string, string> = {
   ZW: '263',
 };
 
-export const DEFAULT_DIAL_CODE = '7';
+/**
+ * What to fall back to when the device country is unknown: nothing.
+ *
+ * This used to be '7', so a phone whose region could not be resolved had
+ * "+7" — Russia — quietly typed into the country-code field for it. The field
+ * looks filled in, so a number pasted in beside it opened a chat with a
+ * stranger on the other side of the world, and nothing on screen said where
+ * that prefix had come from. An empty code leaves the field showing the bare
+ * "+" it shows when cleared, and Tools already refuses to open a chat without
+ * one and says so.
+ */
+export const DEFAULT_DIAL_CODE = '';
 
 export const getDialCodeForCountry = (countryCode?: string): string | null => {
   if (!countryCode) {
@@ -256,12 +267,53 @@ export const getDialCodeForCountry = (countryCode?: string): string | null => {
   return COUNTRY_DIAL_CODES[cleaned] ?? null;
 };
 
+/** No country code is longer than this, and the stored record caps the field. */
+const MAX_DIAL_DIGITS = 4;
+
+/**
+ * The dial code as the Tools field is allowed to hold it: "+" and digits.
+ *
+ * Two things beyond stripping punctuation happen here, and both exist because
+ * this function is the only writer of `prefs.dialCode`:
+ *
+ * - A leading run of zeros is dropped. "+91" and "0091" are the same
+ *   instruction written two ways, and half the world writes the second; kept
+ *   as typed it built `wa.me/0091…`, which WhatsApp rejects as "the phone
+ *   number shared via url is invalid" while the field looked perfectly filled
+ *   in. No country code begins with a zero, so this can never eat a real one.
+ * - The digits are capped. The stored record's validator refuses anything
+ *   over eight characters, so a longer string used to survive the session and
+ *   then be replaced by the default on the next launch: the code the user had
+ *   typed came back empty with nothing on screen to explain it. Everything
+ *   this function can now produce round-trips through the store.
+ */
 export const formatDialCode = (dialCode: string): string => {
-  const digitsOnly = dialCode.replace(/[^\d]/g, '');
+  const digitsOnly = dialCode
+    .replace(/[^\d]/g, '')
+    .replace(/^0+/, '')
+    .slice(0, MAX_DIAL_DIGITS);
   if (!digitsOnly) {
     return '+';
   }
   return `+${digitsOnly}`;
+};
+
+/**
+ * The longest country code that starts `digits`, or null.
+ *
+ * For a number pasted in international form ("+44 7911 123456", "+1 242 …"):
+ * the longest match wins because the North American codes nest — "1242"
+ * (Bahamas) is a country code and so is "1", and the shorter one would leave
+ * "242…" as the number.
+ */
+export const longestDialCodePrefix = (digits: string): string | null => {
+  let best: string | null = null;
+  for (const code of Object.values(COUNTRY_DIAL_CODES)) {
+    if (digits.startsWith(code) && (best === null || code.length > best.length)) {
+      best = code;
+    }
+  }
+  return best;
 };
 
 export const getDefaultDialCode = (countryCode?: string): string => {

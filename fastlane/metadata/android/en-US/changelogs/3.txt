@@ -1,0 +1,8 @@
+Redesigned app, now the same as the Google Play version, renamed Status Saver.
+
+* New look with light and dark themes
+* Save many statuses at once, and repost or share any of them
+* Auto-save new statuses when you open the app
+* Favourites, and a Vault that keeps saved statuses out of the gallery
+* Built-in photo viewer and video player
+* No permissions at all on Android 11 and later

@@ -2,11 +2,9 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-project.ext.vectoricons = [
-    iconFontNames: [ 'MaterialIcons.ttf', 'MaterialCommunityIcons.ttf', 'AntDesign.ttf', 'FontAwesome.ttf' ]
-]
-
-apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+// No react-native-vector-icons font copy: the app draws every glyph itself
+// from src/components/icons.tsx, and an architecture test forbids importing
+// the library. Bundling its four TTFs only grew the APK.
 
 // Load keystore properties for release signing
 def keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -90,28 +88,54 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.vaishnavmandlik.librestatus"
+    namespace "com.mandlik.statussaverpro"
     defaultConfig {
-        applicationId "com.vaishnavmandlik.librestatus"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.0.1"
+        versionCode 3
+        versionName "1.1.0"
     }
-    
+
+    // One codebase, two stores. The code is identical; only the application
+    // id differs, because a store ties an app to its id forever and the two
+    // listings were created under different ones.
+    //   fdroid -> F-Droid builds this from source and signs it itself
+    //   play   -> the signed bundle uploaded to Google Play
+    flavorDimensions "store"
+    productFlavors {
+        fdroid {
+            dimension "store"
+            applicationId "com.vaishnavmandlik.librestatus"
+        }
+        play {
+            dimension "store"
+            applicationId "com.mandlik.statussaverpro"
+        }
+    }
+
+    // True when this invocation is building an app bundle for Play. Play splits
+    // an .aab by ABI itself, and AGP refuses to build one from a project that
+    // is also producing per-ABI APKs ("Multiple shrunk-resources files found"),
+    // so the split only applies to the APKs we sideload.
+    def buildingBundle = gradle.startParameter.taskNames.any {
+        it.toLowerCase().contains("bundle")
+    }
+
     splits {
         abi {
             reset()
             // One APK per ABI (no universal APK) so each download is smaller.
-            enable true
+            enable !buildingBundle
             universalApk false
             include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
     }
 
-    // Give each per-ABI APK a unique version code. The ABI digit goes in the
-    // lowest position so codes order as armeabi-v7a < arm64-v8a < x86 < x86_64,
-    // matching the VercodeOperation in the F-Droid metadata.
+    // Give each per-ABI APK a unique version code, because a store will not
+    // accept two APKs sharing one. The ABI digit goes in the lowest position
+    // so codes order as armeabi-v7a < arm64-v8a < x86 < x86_64. A bundle has
+    // one output and must keep the plain versionCode, which is what Play
+    // reads, so this is skipped there.
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
             def abiName = output.getFilter(com.android.build.OutputFile.ABI)
@@ -136,7 +160,9 @@ android {
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
             } else {
-                // Fallback to debug keystore if release keystore not configured
+                // Configuration must succeed even with no keystore, or debug
+                // builds break too. The real guard runs at execution time
+                // below, so a release can still never be silently debug-signed.
                 storeFile file('debug.keystore')
                 storePassword 'android'
                 keyAlias 'androiddebugkey'
@@ -151,10 +177,59 @@ android {
         release {
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
+            /*
+             * The plain config, not "proguard-android-optimize.txt". This
+             * looks like free money and is not, so it is worth writing down.
+             *
+             * The two files differ by one line: the optimizing variant drops
+             * -dontoptimize and lets R8 inline, merge classes and prune
+             * branches. Measured here it took the dex from 6.34 MB to 4.38 MB,
+             * a 31% cut shipped to every user. It also made the app die on
+             * launch:
+             *
+             *   ClassNotFoundException:
+             *     com.facebook.react.devsupport.CxxInspectorPackagerConnection
+             *   at OpenSourceMergedSoMapping.libreact_devsupportjni_so
+             *
+             * React Native's JNI resolves that class by string name at .so
+             * load time. No Java code references it, so to the optimizer it is
+             * unreachable and class merging is free to make the name stop
+             * existing. Shrinking alone never hit this, which is why the plain
+             * config has always worked.
+             *
+             * A -keep rule fixes that one class. The problem is the rest: the
+             * crash is only the first FindClass on the startup path, and every
+             * other one in React Native and in each library is the same shape,
+             * invisible to the optimizer and to any build-time check. Proving
+             * that set complete means exercising every code path in a release
+             * build, and the cost of being wrong is a crash that no debug
+             * build reproduces. That is a bad trade for 2 MB when Play already
+             * splits the download per device.
+             */
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             // Shrink resources to reduce APK size
             shrinkResources true
         }
+    }
+}
+
+/*
+ * Fail an actual release assembly when there is no keystore — but only then.
+ * Throwing from the signingConfigs block instead would run at configuration
+ * time and break `assembleDebug`, which is how this was first written.
+ */
+gradle.taskGraph.whenReady { graph ->
+    def buildingRelease = graph.allTasks.any {
+        it.project == project && it.name ==~ /(?i)(assemble|bundle|install|package)play.*release.*/
+    }
+    // Only the Play flavor is guarded. F-Droid builds the fdroid flavor on its
+    // own servers with no keystore at all and signs the APK itself.
+    if (buildingRelease && !keystorePropertiesFile.exists()
+            && !project.hasProperty('allowDebugSigningForRelease')) {
+        throw new GradleException(
+                'android/keystore.properties is missing, so the release build cannot be signed. ' +
+                'Create it with storeFile/storePassword/keyAlias/keyPassword, or pass ' +
+                '-PallowDebugSigningForRelease to deliberately build an undistributable debug-signed APK.')
     }
 }
 
@@ -164,6 +239,8 @@ dependencies {
 
     // DocumentFile for SAF
     implementation "androidx.documentfile:documentfile:1.0.1"
+    // FileProvider for the share cache (Repost hands files to WhatsApp directly).
+    implementation "androidx.core:core:1.13.1"
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
