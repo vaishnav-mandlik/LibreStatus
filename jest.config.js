@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'react-native',
   setupFiles: ['./jest.setup.js'],
+  // The first render of a suite can take seconds on a busy CI runner.
+  testTimeout: 20000,
   transformIgnorePatterns: [
     'node_modules/(?!(' +
       '(jest-)?react-native' +

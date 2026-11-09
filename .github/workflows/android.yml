@@ -27,7 +27,9 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx eslint . --ext .ts,.tsx
-      - run: npx jest
+      # In band: parallel workers on a small runner starve the viewer tests,
+      # whose double-tap and animation windows are measured in real time.
+      - run: npx jest --runInBand
 
       # The same flavor F-Droid builds, with no keystore, so this proves the
       # F-Droid build works without any secret. The APKs are debug-signed
