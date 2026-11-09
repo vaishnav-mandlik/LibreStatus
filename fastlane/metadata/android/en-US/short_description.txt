@@ -1,1 +1,1 @@
-Save status photos & videos to your gallery. Offline status saver with a Vault.
+Save status photos & videos to your gallery. Offline status downloader.

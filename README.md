@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="fastlane/metadata/android/en-US/images/icon.png" width="96" alt="Status Saver icon" />
+<img src="android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" width="96" alt="Status Saver icon" />
 
 # Status Saver
 
-**View, save and share statuses, fully offline.**
+**Status Saver・Video Downloader: save status photos & videos to your gallery, fully offline.**
 
 No account, no ads, no trackers, no internet permission. Everything happens on your phone.
 
@@ -24,6 +24,9 @@ No account, no ads, no trackers, no internet permission. Everything happens on y
 <a href="https://f-droid.org/packages/com.vaishnavmandlik.librestatus/">
   <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70" />
 </a>
+<a href="https://play.google.com/store/apps/details?id=com.mandlik.statussaverpro">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="70" />
+</a>
 <a href="https://github.com/vaishnav-mandlik/LibreStatus/releases/latest">
   <img src="https://raw.githubusercontent.com/andOTP/andOTP/master/assets/badges/get-it-on-github.png" alt="Get it on GitHub" height="70" />
 </a>
@@ -31,7 +34,7 @@ No account, no ads, no trackers, no internet permission. Everything happens on y
 </div>
 
 - **F-Droid:** [f-droid.org/packages/com.vaishnavmandlik.librestatus](https://f-droid.org/packages/com.vaishnavmandlik.librestatus/)
-- **Google Play:** the same app, published as `com.mandlik.statussaverpro`
+- **Google Play:** [play.google.com/store/apps/details?id=com.mandlik.statussaverpro](https://play.google.com/store/apps/details?id=com.mandlik.statussaverpro)
 - **Direct APK:** the [releases page](https://github.com/vaishnav-mandlik/LibreStatus/releases/latest)
 
 This repository is the single source for both stores. The F-Droid and Play
@@ -46,9 +49,10 @@ builds run the same code; they differ only in their application id (see
 
 <div align="center">
 
-| Feed | Viewer | Saved | Tools | Settings |
-| :---: | :---: | :---: | :---: | :---: |
-| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="160" alt="Feed" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="160" alt="Viewer" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="160" alt="Saved" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="160" alt="Tools" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="160" alt="Settings" /> |
+| | | |
+| :---: | :---: | :---: |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="250" alt="Save statuses in one tap" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="250" alt="Watch every status full screen" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="250" alt="All your saves in one place" /> |
+| <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="250" alt="Keep private ones in the Vault" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width="250" alt="Auto-save new statuses" /> | <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" width="250" alt="Fully offline and private" /> |
 
 </div>
 

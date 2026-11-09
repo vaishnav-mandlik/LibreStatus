@@ -1,36 +1,27 @@
-Status Saver keeps the status photos and videos you have already viewed, so you
-can save them to your gallery before they disappear. It works completely
-offline: everything happens on your phone.
+Status Saver・Video Downloader keeps the status photos and videos you have already viewed, so you can save them to your gallery before they disappear. It works completely offline: everything happens on your phone.
 
-How it works:
-
+HOW IT WORKS
 1. Open your messaging app and view the statuses you like.
 2. Open Status Saver and choose the Android › media folder once, when asked.
 3. Every status you viewed appears here. Tap Save to keep it in your gallery.
 
-Features:
+FEATURES
+• All viewed statuses in one place, photos and videos together, sorted by time
+• Save one status or many at once, straight to your gallery (DCIM › Status)
+• Auto-save: keep every new status automatically when you open the app
+• Built-in photo viewer and video player
+• Repost a status or share it to any app
+• Favourites to find the ones you love quickly
+• Vault: move a saved status out of your gallery into the app's private storage
+• Open a chat with any number without saving it to your contacts
+• Light and dark theme, 8 languages
+• Light and fast, works on Android 7 and later
 
-* All viewed statuses in one place, photos and videos together, sorted by time
-* Save one status or many at once, straight to your gallery (DCIM › Status)
-* Auto-save: keep every new status automatically when you open the app
-* Built-in photo viewer and video player
-* Repost a status or share it to any app
-* Favourites to find the ones you love quickly
-* Vault: move a saved status out of your gallery into the app's private storage
-* Open a chat with any number without saving it to your contacts
-* Light and dark theme, 8 languages
-* Light and fast, works on Android 7 and later
+PRIVATE BY DESIGN
+The app has no internet permission, so it cannot upload or send your data anywhere. There are no ads, no analytics, no tracking and no account. On Android 11 and later it asks for no storage or media permission at all, and it never asks for "All files access".
 
-Private by design:
+PLEASE RESPECT OTHERS
+Statuses belong to the people who posted them. Ask before you share anything that is not yours.
 
-The app has no internet permission, so it cannot upload or send your data
-anywhere. There are no ads, no analytics, no tracking and no account. On
-Android 11 and later it asks for no storage or media permission at all, and it
-never asks for "All files access".
-
-Please respect others: statuses belong to the people who posted them. Ask
-before you share anything that is not yours.
-
-Status Saver is an independent app and is not affiliated with or endorsed by
-WhatsApp or Meta. It reads only the status files already stored on your own
-device, in a folder you choose yourself.
+DISCLAIMER
+Status Saver・Video Downloader is an independent app. It is not affiliated with, endorsed by, sponsored by, or in any way officially connected to WhatsApp LLC, Meta Platforms, Inc., or any of their subsidiaries or affiliates. "WhatsApp" and "Meta" and all related names and marks are the property of their respective owners. This app does not modify or interfere with any messaging app: it reads only the status files already stored on your own device, in a folder you choose yourself.
